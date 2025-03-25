@@ -1,5 +1,5 @@
 //***************************//
-// XDock PRO
+// XDock PRO - STEF Strasburg
 // Dernière mise à jour le 25/03/2025
 //***************************//
 $("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.05_25/03/2024- </small>");

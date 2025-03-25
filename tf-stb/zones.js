@@ -785,7 +785,7 @@ $("<style>").appendTo("head").html(`
       </div>`;
   
   $("#img-zonenuebersicht").replaceWith(a4);
-  $("head>title").html("Gestion des zones TF-STB :: XDock PRO");
+  $("head>title").html("Gestion des zones :: XDock PRO");
   
   // Set page header
   $("h1").parent().replaceWith(`<div id="xdock_pro_page_header" class="row d-flex align-items-center h-100 xdock-head-row">
