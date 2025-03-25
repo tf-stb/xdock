@@ -1,8 +1,8 @@
 //***************************//
 // XDock PRO
-// Dernière mise à jour le 12/03/2025
+// Dernière mise à jour le 25/03/2025
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.04_12/03/2024- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.05_25/03/2024- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -697,7 +697,7 @@ let SM_found =0;
 // open map
 $(".xdockLogo").on("click", function (e) {
   e.preventDefault();
-  window.open("/#map");
+  window.open("/#zones");
 });
 
 //--------------------------------
@@ -787,8 +787,8 @@ $('.navbar [href="/Artikel/Artikel"]').after(`
 <hr>
 <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">XDock PRO:</div>
 <a class="dropdown-item" href="/#cockpit" target="_blank">SMART Cockpit</a>
+<a class="dropdown-item" href="/#zones" target="_blank"> Gestion des zones</a>
 <a class="dropdown-item" href="/#portes" target="_blank">Gestion des portes</a>
-<a class="dropdown-item" href="/#map" target="_blank">Carte de l'entrepôt</a>
 <a class="dropdown-item" href="https://tf-stb.github.io/outils/" target="_blank">Liste des Outils </a>
 
 `);
@@ -1316,21 +1316,3 @@ function formatDate_pro(date) {
 
 const date_note = new Date();
 const last_edit = formatDate_pro(date_note);
-
-// show note notfaction
-if(window.location.href === "https://tf-stb.xdock.de/"){
-  $.get("/Spediteure/EditSpediteur/46770", function (data_dom, textStatus, jqXHR) {
-    let data_textarea = $(data_dom).find("#SpediteurKommentar").val();
-    let note = JSON.parse(data_textarea);
-  
-   if (note.transport.trim().length > 0 || note.logistique.trim().length > 0) {
-    $(".container-fluid.px-4").append(
-      `<a id="note-notfaction" href="/Wareneingang/Herkunftsorte">
-        <i class="far fa-comments" aria-hidden="true"></i> Nouvelles informations disponibles 
-      
-      </a>`
-    );
-  }
-   
-  });
-}
