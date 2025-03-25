@@ -2,7 +2,7 @@
 // XDock PRO - STEF LAVAL
 // Dernière mise à jour le 25/03/2025
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 1.00_25/03/2024- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.05_25/03/2024- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
