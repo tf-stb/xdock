@@ -787,8 +787,8 @@ $('.navbar [href="/Artikel/Artikel"]').after(`
 <hr>
 <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">XDock PRO:</div>
 <a class="dropdown-item" href="/#cockpit" target="_blank">SMART Cockpit</a>
-<a class="dropdown-item" href="/#zones" target="_blank"> Gestion des zones</a>
 <a class="dropdown-item" href="/#portes" target="_blank">Gestion des portes</a>
+<a class="dropdown-item" href="/#zones" target="_blank"> Gestion des zones</a>
 <a class="dropdown-item" href="https://tf-stb.github.io/outils/" target="_blank">Liste des Outils </a>
 
 `);

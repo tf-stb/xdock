@@ -134,7 +134,7 @@ width: 100%;
 .zones_top {
 position: absolute;
 top: 120px;
-left: 90px;
+left: 80px;
 display: flex;
 justify-content: center;
 align-items: center;
@@ -145,7 +145,7 @@ flex-wrap: wrap;
 .zones_down {
 position: absolute;
 top: 245px;
-left: 90px;
+left: 80px;
 display: flex;
 justify-content: center;
 align-items: center;
@@ -184,7 +184,7 @@ width: 20px;
 
 [zone="112"],[zone="220"]
 {
-margin-right: 15px;
+margin-right: 45px;
 }
 .thin>.zone_name {
 position: absolute;
@@ -705,7 +705,7 @@ font-size: 100%;
   
       $.get(zoneEL.attr("href"), function (dataServ, textStatus, jqXHR) {
         let content = $(dataServ).find("#sperrgrundTextArea").val();
-        $("#" + zoneName).html(content.substring(0, 7));
+        $("#" + zoneName).html(content.substring(0, 12));
 
       });
     });
