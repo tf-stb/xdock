@@ -1,8 +1,8 @@
 //***************************//
 // XDock PRO - STEF Strasburg
-// Dernière mise à jour le 25/03/2025
+// Dernière mise à jour le 26/03/2025
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.05_25/03/2024- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.06_26/03/2024- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -1071,9 +1071,11 @@ if (isSMTour) {
       </a>
       <div class="dropdown-menu" aria-labelledby="navbarDropdown">
             <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">Entrée de marchandises:</div>
-            <button class="dropdown-item" onclick="Selectionners_positions_encours()"><span class="fal fa-forklift  mr-10"></span> Sélectionner tout les positions "En cours"</button>
+            <button class="dropdown-item" onclick="Selectionners_positions_encours()"><span class="fal fa-forklift  mr-10"></span> Sélectionner les positions "En cours"</button>
             <hr>
-            <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">Sortie de marchandises:</div>    
+            <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">Sortie de marchandises:</div> 
+            <button class="dropdown-item" onclick="select_all_positions()"><span class="fal fa-check  mr-10"></span> Sélectionner tout les positions</button>
+            <hr>   
             <button class="dropdown-item" onclick="changer_transporteur()"><span class="fal fa-exchange	  mr-10"></span> Changer les données du transporteur</button>
             <button class="dropdown-item" onclick="indiquer_palettes()"><span class="fal fa-edit	  mr-10"></span>  Indiquer les palettes</button>
 
@@ -1316,3 +1318,44 @@ function formatDate_pro(date) {
 
 const date_note = new Date();
 const last_edit = formatDate_pro(date_note);
+
+
+//--------------------------------
+// Fix JERMI Kaesetheke
+//--------------------------------
+
+function fixJERMI(){
+  if (!document.body.innerHTML.includes("Kaesetheke")) return false;
+
+  let kommentar_textarea = $("#kommentar_textarea");
+  let old_value = $("#kommentar_textarea").val();
+
+  if(!old_value.includes("JERMI:")){
+    $('#kommentar_textarea').parent().prepend(`
+      <div class="alert alert-danger" role="alert">Ce camion contient des palettes en plastique (JERMI) .<a href="#" onclick=IndiquerJERMI()> Indiquer les palettes</a></div>
+    `)
+  }
+  
+}
+
+function IndiquerJERMI(){
+  let kommentar_textarea = $("#kommentar_textarea");
+  let old_value = $("#kommentar_textarea").val();
+  let all_palletes =0;
+  $("#table-WaTourLieferpositionen tbody>tr[data-walpid]").each(function (key, value) {
+    let article = value.cells[4].innerText;
+    let palettes_unm = parseInt(value.cells[14].innerText);
+    
+    if(article.includes("Kaesetheke")){
+      all_palletes += palettes_unm;
+    }
+  });
+  
+  kommentar_textarea.val(`JERMI: ${all_palletes} Palettes en plastique sur ${all_palletes / 2} EURO` + "\n \n" + old_value);
+  $("#palettenGeladen").val( parseInt($("#palettenGeladen").val()) + all_palletes / 2)
+  $("#saveBtn").trigger("click");
+}
+
+if (isSMTour) {
+  fixJERMI()
+}
