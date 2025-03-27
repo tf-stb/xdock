@@ -1,8 +1,8 @@
 //***************************//
 // XDock PRO - STEF Strasburg
-// Dernière mise à jour le 26/03/2025
+// Dernière mise à jour le 27/03/2025
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.06_26/03/2024- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.07_27/03/2025- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -1077,7 +1077,7 @@ if (isSMTour) {
             <button class="dropdown-item" onclick="select_all_positions()"><span class="fal fa-check  mr-10"></span> Sélectionner tout les positions</button>
             <hr>   
             <button class="dropdown-item" onclick="changer_transporteur()"><span class="fal fa-exchange	  mr-10"></span> Changer les données du transporteur</button>
-            <button class="dropdown-item" onclick="indiquer_palettes()"><span class="fal fa-edit	  mr-10"></span>  Indiquer les palettes</button>
+            <button class="dropdown-item" onclick="Indiquer_les_palettes()"><span class="fal fa-edit	  mr-10"></span>  Indiquer les palettes</button>
 
 
       </div>
@@ -1087,15 +1087,6 @@ if (isSMTour) {
 }
 
 
-//--------------------------------
-//indiquer_palettes
-//--------------------------------
-function indiquer_palettes(){
-  let kommentar_textarea = $("#kommentar_textarea");
-  let old_value = $("#kommentar_textarea").val();
-  kommentar_textarea.val(`Palettes chargée: ${$('#palettenGeladen1').val()} EURO + ${$('#palettenGeladen').val()} vides` + "\n \n" + old_value);
-
-}
 
 //--------------------------------
 // Changer les données du transporteur
@@ -1321,41 +1312,59 @@ const last_edit = formatDate_pro(date_note);
 
 
 //--------------------------------
-// Fix JERMI Kaesetheke
+// Indiquer les palettes
 //--------------------------------
 
-function fixJERMI(){
-  if (!document.body.innerHTML.includes("Kaesetheke")) return false;
+function int_Indiquer_les_palettes(){
+  let tourStatus = parseInt($(".tourStatus").html());
+  if (tourStatus !== 90) return false;
 
-  let kommentar_textarea = $("#kommentar_textarea");
   let old_value = $("#kommentar_textarea").val();
 
-  if(!old_value.includes("JERMI:")){
+  if(!old_value.includes("Palettes chargée:")){
     $('#kommentar_textarea').parent().prepend(`
-      <div class="alert alert-danger" role="alert">Ce camion contient des palettes en plastique (JERMI) .<a href="#" onclick=IndiquerJERMI()> Indiquer les palettes</a></div>
+      <div class="alert alert-danger" role="alert"><span class="fas fa-exclamation-triangle		text-danger  mr-10"></span> <a href="#" class="text-danger" onclick="Indiquer_les_palettes()"> Indiquer les palettes!</a></div>
     `)
   }
   
 }
 
-function IndiquerJERMI(){
+function Indiquer_les_palettes(){
+
   let kommentar_textarea = $("#kommentar_textarea");
   let old_value = $("#kommentar_textarea").val();
-  let all_palletes =0;
+
+  let all_Palettes = parseInt($("#stdDs")[0].innerText.substring(0.2))
+  let isJermi = (document.body.innerHTML.includes("Kaesetheke"));
+ 
+  let all_euro_Palettes = parseInt($('#palettenGeladen1').val());
+  let Palettes_en_plus= parseInt($('#palettenGeladen').val())
+
+ let all_JERMI =0;
+
+ if(isJermi){
   $("#table-WaTourLieferpositionen tbody>tr[data-walpid]").each(function (key, value) {
     let article = value.cells[4].innerText;
     let palettes_unm = parseInt(value.cells[14].innerText);
     
     if(article.includes("Kaesetheke")){
-      all_palletes += palettes_unm;
+      all_JERMI += palettes_unm;
     }
   });
-  
-  kommentar_textarea.val(`JERMI: ${all_palletes} Palettes en plastique sur ${all_palletes / 2} EURO` + "\n \n" + old_value);
-  $("#palettenGeladen").val( parseInt($("#palettenGeladen").val()) + all_palletes / 2)
+ 
+  $("#palettenGeladen").val( parseInt($("#palettenGeladen").val()) + all_JERMI / 2)
+  kommentar_textarea.val(`Palettes chargée: ${all_euro_Palettes + all_JERMI / 2} EURO + ${all_Palettes - all_euro_Palettes } CHEPS` + "\n \n" + old_value);
+
+ }else{
+
+  kommentar_textarea.val(`Palettes chargée: ${all_euro_Palettes + Palettes_en_plus} EURO + ${all_Palettes - all_euro_Palettes } CHEPS` + "\n \n" + old_value);
+
+ }
+
   $("#saveBtn").trigger("click");
 }
 
+
 if (isSMTour) {
-  fixJERMI()
+  int_Indiquer_les_palettes()
 }
