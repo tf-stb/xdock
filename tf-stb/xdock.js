@@ -1317,7 +1317,7 @@ const last_edit = formatDate_pro(date_note);
 
 function int_Indiquer_les_palettes(){
   let tourStatus = parseInt($(".tourStatus").html());
-  if (tourStatus !== 90) return false;
+  if (tourStatus !== 81) return false;
 
   let old_value = $("#kommentar_textarea").val();
 
