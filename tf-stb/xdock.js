@@ -1,8 +1,8 @@
 //***************************//
 // XDock PRO - STEF Strasburg
-// Dernière mise à jour le 27/03/2025
+// Dernière mise à jour le 11/04/2025
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.07_27/03/2025- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.08_11/04/2025- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -540,6 +540,8 @@ if (isEMTour) {
                <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">Sortie de marchandises:</div>
               <button class="dropdown-item" onclick="Afficher_SM_attribue()"><span class="fal fa-link mr-10"></span>  Afficher SM attribué à ce camion</button> 
               <button class="dropdown-item" id="removeSM"><span class="fal fa-trash  mr-10"></span>  Supprimer SM des positions sélectionnées</button> 
+               <hr>
+              <button class="dropdown-item" onclick="check_zoning()"><span class="fal fa-search  mr-10"></span>  Vérifier les zonages <span style=" color: orange;">New</span></button> 
               <hr>
               <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">Autres:</div>
               <button class="dropdown-item" onclick="auto_comments()"><span class="fal fa-comments mr-10"></span> Commentaires</button>
@@ -1367,4 +1369,103 @@ function Indiquer_les_palettes(){
 
 if (isSMTour) {
   int_Indiquer_les_palettes()
+}
+
+
+//--------------------------------
+// verevi zonage
+//--------------------------------
+function check_zoning() {
+  const MAX_TRUCK_CAPACITY = 33; // Maximum truck capacity in terms of places
+  let destinations = []; // Array to store available destinations data
+  let requiredDestinations = {}; // Object to group required places by destination
+  
+  $.get("/Warenausgang/Tag?sort=StatusASC&selectedDate=" + $("#selectedDate").val(), function (data) {
+      let smData = $(data);
+
+      // Process destination data (available places)
+      smData.find("#table-container tbody>tr").each(function () {
+          let destination = this.cells[8].innerText.trim().replace(" ...", "");
+          let tourStatus = parseInt(this.cells[1].innerText.trim());
+          let placesUsed = parseFloat(this.cells[2].innerText.trim());
+
+          if (tourStatus >= 11 && tourStatus < 80) {
+              
+              let existingDestination = destinations.find(dest => dest.destination === destination);
+              let availablePlaces = MAX_TRUCK_CAPACITY - placesUsed;
+              
+              if (existingDestination) {
+                  existingDestination.PlacesAvailable += availablePlaces;
+              } else {
+                  destinations.push({ 
+                      destination: destination, 
+                      PlacesAvailable: availablePlaces 
+                  });
+                  //console.log(destinations);
+              }
+          }
+      });
+
+      // First pass: Group required places by destination
+      $("#table-WeTourLieferpositionen tbody>tr[data-welpid]").each(function () {
+          let tr = this;
+          let status = parseInt(tr.cells[1].innerText.trim());
+          let objectif = tr.cells[5].innerText.trim();
+          let requiredPlaces =0;
+          let all_Palettes = parseInt(tr.cells[13].innerText.trim());
+          // Only process status 10 (needs checking)
+          if (status === 10) {
+              // Adjust required places if DS checkbox is checked
+              if ($(tr.cells[9]).find("input[type='checkbox']").is(":checked")) {
+                  requiredPlaces += all_Palettes / 2;
+                  
+              }else{
+                  requiredPlaces += all_Palettes;
+              }
+              
+              // Group by destination
+              if (!requiredDestinations[objectif]) {
+                  requiredDestinations[objectif] = 0;
+              }
+              requiredDestinations[objectif] += requiredPlaces;
+
+             // console.log(requiredDestinations);
+          }
+      });
+
+      // Second pass: Check availability and update cells
+      $("#table-WeTourLieferpositionen tbody>tr[data-welpid]").each(function () {
+          let tr = this;
+          let status = parseInt(tr.cells[1].innerText.trim());
+          let objectif = tr.cells[5].innerText.trim();
+          let cell18 = $(tr.cells[18]);
+          
+          switch (status) {
+              case 10: // Check zone availability
+                  let availableDestination = destinations.find(dest => dest.destination === objectif);
+                  let totalRequired = requiredDestinations[objectif] || 0;
+                  
+                  if (availableDestination && availableDestination.PlacesAvailable >= totalRequired) {
+                      cell18.html("Zone: OK!");
+                  } else {
+                      cell18.html(`<span style="font-weight: bold; color: red;">Pas de zone</span>`);
+                  }
+                  break;
+                  
+              case 11: // No zone
+                  cell18.html(`<span style="font-weight: bold; color: red;">Pas de zone</span>`);
+                  break;
+                  
+              case 20: // Zone OK
+                  cell18.html("Zone: OK!");
+                  break;
+                  
+              default:
+                  // Handle other statuses if needed
+                  break;
+          }
+      });
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+      console.error("Error fetching data: ", textStatus, errorThrown);
+  });
 }
