@@ -1,5 +1,5 @@
 //***************************//
-// Map add-on for XDock PRO
+// TF-STB Map add-on for XDock PRO
 // V 2.07
 // Dernière mise à jour le  16/02/2025
 //***************************//
