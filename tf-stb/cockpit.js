@@ -359,7 +359,7 @@ $(document).ready(function () {
       .each(function (indexInArray, valueOfElement) {
         let user_full_name = valueOfElement.cells[2].innerText.trim();
         let user_email = valueOfElement.cells[1].innerText.trim();
-        let user_last_login = valueOfElement.cells[4].innerText.trim();
+        let user_last_login = valueOfElement.cells[5].innerText.trim();
         let user_id = valueOfElement.cells[0].innerText.trim();
 
         if (document.body.innerHTML.includes(user_email)) {
