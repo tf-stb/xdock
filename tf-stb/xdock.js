@@ -1,8 +1,8 @@
 //***************************//
 // XDock PRO - STEF Strasburg
-// Dernière mise à jour le 11/04/2025
+// Dernière mise à jour le 19/05/2025
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.08_11/04/2025- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.09_19/05/2025- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -228,21 +228,6 @@ button#paste_palettes {
 .note-toolbar {
   margin-top: 20px;
   text-align: right;
-}
-
-#note-notfaction {
-    font-size: 16px;
-    color: rgb(32, 33, 36);
-    background: #fff8b8;
-    padding: 15px 20px;
-    border-radius: 8px;
-    position: absolute;
-    bottom: 35px;
-    
-}
-a#note-notfaction:hover {
-    text-decoration: none;
-    background: #fbf191;
 }
  `);
 
@@ -511,11 +496,6 @@ if (window.location.href.includes("Warenausgang/AddLieferpositionen?waTourId")) 
 //--------------------------------
 
 if (isEMTour) {
-  let status = $(".tourStatus").html();
-  // create Btn
-
-  //let task_disabled = parseInt(status) == 75 ? "" : "disabled";
-
   $($("#kopfdaten").children()[3]).append(
     `
     <div class="pt-3 dropdown">
@@ -525,7 +505,7 @@ if (isEMTour) {
       </a>
       <div class="dropdown-menu" aria-labelledby="navbarDropdown">
           <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">Tâches:</div>
-          <button class="dropdown-item" onclick="passe_encours()" >Passe la tâche "En cours"</button>
+          <button class="dropdown-item" onclick="DemanderPrioritaire()" > <i class="fal fa-shipping-fast mr-10"></i> Demander un déchargement prioritaire</button>
           <hr>
           <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">Entrée de marchandises:</div>
               <button class="dropdown-item" onclick="copy_em_id()"><span class="fal fa-copy  mr-10"></span> Copier EM ID</button>
@@ -541,7 +521,7 @@ if (isEMTour) {
               <button class="dropdown-item" onclick="Afficher_SM_attribue()"><span class="fal fa-link mr-10"></span>  Afficher SM attribué à ce camion</button> 
               <button class="dropdown-item" id="removeSM"><span class="fal fa-trash  mr-10"></span>  Supprimer SM des positions sélectionnées</button> 
                <hr>
-              <button class="dropdown-item" onclick="check_zoning()"><span class="fal fa-search  mr-10"></span>  Vérifier les zonages <span style=" color: orange;">New</span></button> 
+              <button class="dropdown-item" onclick="check_zoning()"><span class="fal fa-search  mr-10"></span>  Vérifier les zonages </button> 
               <hr>
               <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">Autres:</div>
               <button class="dropdown-item" onclick="auto_comments()"><span class="fal fa-comments mr-10"></span> Commentaires</button>
@@ -553,10 +533,7 @@ if (isEMTour) {
 
 // fucations Entrée de marchandises
 
-function passe_encours(){
-  $("#startausgabeEntladeanweisung").trigger("click")
-  $("#saveBtn").trigger("click")
-}
+
 function copy_em_id() {
   let EM_ID = [];
   let tourID = window.location.href.split("TourId=")[1].substr(0, 8);
@@ -1072,6 +1049,9 @@ if (isSMTour) {
           Outils supplémentaires
       </a>
       <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">Tâches:</div>
+            <button class="dropdown-item" onclick="DemanderPrioritaire()" > <i class="fal fa-shipping-fast mr-10"></i> Demander un chargement prioritaire</button>
+            <hr>
             <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">Entrée de marchandises:</div>
             <button class="dropdown-item" onclick="Selectionners_positions_encours()"><span class="fal fa-forklift  mr-10"></span> Sélectionner les positions "En cours"</button>
             <hr>
@@ -1468,4 +1448,60 @@ function check_zoning() {
   }).fail(function(jqXHR, textStatus, errorThrown) {
       console.error("Error fetching data: ", textStatus, errorThrown);
   });
+}
+
+//--------------------------------
+// Demander la priorité & afficher le temps
+//--------------------------------
+
+$(document).ready(function() {
+  if (!window.location.href.toLowerCase().includes("yardmanagement")) return;
+
+  // Function to calculate and format time difference
+  function formatTimeDifference(dateString) {
+    const now = new Date();
+    // Convert DD.MM.YYYY HH:MM:SS to Date object
+    const [datePart, timePart] = dateString.split(' ');
+    const [day, month, year] = datePart.split('.');
+    const [hours, minutes, seconds] = timePart.split(':');
+    
+    const tableDate = new Date(year, month-1, day, hours, minutes, seconds);
+    const diffMs = now - tableDate;
+    const diffMins = Math.round(diffMs / (1000 * 60));
+    
+    return diffMins < 1 ? "maintenant" : 
+           diffMins < 60 ? `${diffMins} min` : 
+           `${Math.floor(diffMins/60)}h ${diffMins%60}min`;
+  }
+
+  // Process each row
+  $('#yards-container tbody tr').each(function() {
+    const $row = $(this);
+    
+    // 1. Check for target word in tooltip (priority badge)
+    const tooltipText = $row.find('i.fal.fa-info-square').attr('data-original-title') || '';
+    if (tooltipText.toLowerCase().includes('#priorité')) {
+      $row.find('td:first').html(`
+        <div class="badge badge-pill bg-danger text-white">
+          <i class="fas fa-shipping-fast"></i> Priorité
+        </div>
+      `);
+    }
+    
+    // 2. Update the 10th cell with time difference
+    const $timeCell = $row.find('td').eq(10); // Zero-based index (10th cell = index 9)
+    const timeText = $timeCell.find('span').text().trim();
+    
+    if (/^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}$/.test(timeText)) {
+      const timeDiff = formatTimeDifference(timeText);
+      $timeCell.find('span').text(`${timeText} – ${timeDiff}`);
+      
+     
+    }
+  });
+});
+
+function DemanderPrioritaire(){
+  $("#kommentarIntern").val($("#kommentarIntern").val() + "\n #priorité")
+  $("#saveBtn").trigger("click")
 }
