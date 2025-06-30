@@ -1082,6 +1082,9 @@ $("<style>").appendTo("head").html(`
       case "Montoy Flanville":
         code_vo = "MFV";
         break;
+      case "Martorell":
+         code_vo = "MAT";
+        break;
       case "Murcia":
         code_vo = "MUR";
         break;
