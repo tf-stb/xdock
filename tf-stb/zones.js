@@ -346,9 +346,29 @@ $("<style>").appendTo("head").html(`
     border: 1px solid #c0392b;
   }
   
-  .badge {
-    font-size: 100%;
-  }
+ 
+        
+        .countdown-number {
+            position: absolute;
+         
+        
+            font-weight: bold;
+        }
+
+          .countdown-container {
+               left: 76px;
+    bottom: 96px;
+    position: absolute;
+        }
+        
+        .countdown-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #333;
+            margin: 0.5rem 0;
+        }
+        
+        
   `);
   
   let a4 = `
@@ -780,10 +800,17 @@ $("<style>").appendTo("head").html(`
           <div class="gud_item"><div class="color first_color"></div> <span class="title">Données inconnues</span></div>
           <div class="gud_item"> <span class="date d-none"> Date d'impression: <span id="date_of_print"></span></span></div>
           </div>
+
   
-  
-      </div>`;
-  
+        <div class="countdown-container">
+        
+        <div class="countdown-number" id="noZoneCount">0</div>
+        <p> SM non zonés</p>
+       </div>
+
+
+    </div>`;
+
   $("#img-zonenuebersicht").replaceWith(a4);
   $("head>title").html("Gestion des zones :: XDock PRO");
   
@@ -795,7 +822,6 @@ $("<style>").appendTo("head").html(`
       </h1>
   </div>
   <div class="col-6 text-right">
-  <button class="btn btn-sm btn-outline-primary mr-10" style="height: 50%;" id="double_stock"  ><span class="fas fa-sticky-note	 mr-10"></span>Double stock (cartons)</button>
   <button class="btn btn-sm btn-outline-primary" style="height: 50%;" id="zones_preliv"  ><span class="fa fa-boxes mr-10"></span>Zones de pré-livraison</button>
   
    
@@ -844,6 +870,12 @@ $("<style>").appendTo("head").html(`
   function update_zone_status(dataServ) {
     let zone_info = [];
     let data = $(dataServ);
+
+
+    var count = $(dataServ).find('[class*="waStatus10"]').length;
+    $('#noZoneCount').html(count);
+ 
+
     // loop for zone alredy teken
     $(data.find("#ZoneBase>select>option")).each(function (index, value) {
       let option = $(value);
@@ -1268,47 +1300,5 @@ $("<style>").appendTo("head").html(`
     });
   });
   
-  //***************************//
-  // Nomber de cartons
-  //***************************//
-  let cartons_ok = false;
-  $(document).on("click", "#double_stock", function () {
-    if (cartons_ok) return true;
-    cartons_ok = true;
-    $.get("/Warenausgang/Tag?sort=StatusASC&selectedDate=" + selected_date, function (servdata) {
-      let data = $(servdata);
-  
-      $(data.find("#ZoneBase>select>option")).each(function (index, value) {
-        let option = $(value);
-        let zoneID = parseInt(option.val());
-  
-        if (option.hasClass("zone-in-verwendung-auslieferungstermin")) {
-          let tr_children = data
-            .find("[data-selected='" + zoneID + "']")
-            .parent()
-            .children();
-  
-          // number de cartons*
-          let emplacmet = 0;
-          let emplacmet_num = tr_children[2].innerText.trim();
-          let total_num = tr_children[4].innerText.trim().split("/")[1];
-  
-          if (emplacmet_num.includes(",")) {
-            // Replace the comma with a dot
-            let modifiedStr = emplacmet_num.replace(",", ".");
-  
-            // Convert the modified string to a number
-            emplacmet = parseFloat(modifiedStr);
-          } else {
-            emplacmet = emplacmet_num;
-          }
-  
-          let cartons_num = parseInt(total_num) - emplacmet;
-  
-          let cartons = " <span class='badge bg-light  text-dark'>" + cartons_num + " </span>";
-          // add cartons to dom
-          $("#" + option.html()).append(cartons);
-        }
-      });
-    });
-  });
+
+ 
