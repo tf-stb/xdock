@@ -554,7 +554,7 @@ function check_all_sscc() {
   AllPals.each(function (key, value) {
     // Non SSCC trouve
 
-    let pal = $(value.cells[11]);
+    let pal = $(value.cells[12]);
     if (pal.find("a").length == 0) {
       pal.html("<span style='font-size: 21px;color: red;font-weight: 600;'>SSCC NON TROUVÉ</span>");
       SSCC_not_found += 1;
