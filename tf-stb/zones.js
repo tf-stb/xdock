@@ -1,7 +1,6 @@
 //***************************//
 // TF-STB Map add-on for XDock PRO
-// V 2.07
-// Dernière mise à jour le  16/02/2025
+// Dernière mise à jour le  17/07/2025
 //***************************//
 
 $("<style>").appendTo("head").html(`
@@ -19,7 +18,7 @@ $("<style>").appendTo("head").html(`
       zoom:100% !important;
     }
   
-    .container-fluid.mt-3,#xdock_pro_page_header {
+    .container-fluid.mt-3,#xdock_pro_page_header,.countdown-container {
       display: none !important;
   }
   
@@ -348,27 +347,47 @@ $("<style>").appendTo("head").html(`
   
  
         
-        .countdown-number {
-            position: absolute;
-         
-        
-            font-weight: bold;
-        }
+.countdown-number {
+  position: absolute;
+  font-weight: bold;
+}
 
-          .countdown-container {
-               left: 76px;
-    bottom: 96px;
+.countdown-container {
+    left: 0px;
+    bottom: -105px;
     position: absolute;
-        }
-        
-        .countdown-number {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #333;
-            margin: 0.5rem 0;
-        }
-        
-        
+    display: flex;
+    gap: 20px;
+    background: #fff;
+    padding: 25px 20px !important;
+    width: 29.7cm;
+}
+
+.countdown-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #333;
+  margin: 0.7rem 0;
+}
+
+.divider-count {
+  display: block;
+  height: 44px;
+  background-color: #eee;
+  width: 1px;
+}
+  .border-hightlight {
+    height: 100%;
+    width: 5px;
+    background: #003278;
+    position: absolute;
+    left: 0px;
+    top: 0;
+    
+    
+}
+  
+
   `);
   
   let a4 = `
@@ -803,9 +822,18 @@ $("<style>").appendTo("head").html(`
 
   
         <div class="countdown-container">
-        
-        <div class="countdown-number" id="noZoneCount">0</div>
+        <div class="border-hightlight"></div>
+        <div class="countItem ml-2">
+         <div class="countdown-number" id="noZoneCount">0</div>
         <p> SM non zonés</p>
+        </div>
+<div class="divider-count"></div>
+           <div class="countItem">
+             <div class="countdown-number" id="readyToLoad">0</div>
+        <p> Possibilité de chargement</p>
+        </div>
+        
+      
        </div>
 
 
@@ -872,8 +900,13 @@ $("<style>").appendTo("head").html(`
     let data = $(dataServ);
 
 
-    var count = $(dataServ).find('[class*="waStatus10"]').length;
-    $('#noZoneCount').html(count);
+  
+ const noZoneElements = data.find('[class*="waStatus10"]');
+$('#noZoneCount').text(noZoneElements.length);
+
+ 
+const readyElements = data.find(':is([class^="waStatus70"],[class^="waStatus71"],[class^="waStatus72"],[class^="waStatus75"])');
+$('#readyToLoad').text(readyElements.length);
  
 
     // loop for zone alredy teken
@@ -1025,162 +1058,98 @@ $("<style>").appendTo("head").html(`
     $("#date_of_print").html(current);
   });
   
-  function get_ref_code(ref) {
-    let code_vo;
-    switch (ref) {
-      case "Ablis":
-        code_vo = "ABL";
-        break;
-      case "Alcalá":
-        code_vo = "ALC";
-        break;
-      case "Arcs-sur-Argens":
-        code_vo = "ASA";
-        break;
-      case "Barbery":
-        code_vo = "BAR";
-        break;
-      case "Barcelona":
-        code_vo = "BCN";
-        break;
-      case "Baziège":
-        code_vo = "BAZ";
-        break;
-      case "Beaucaire":
-        code_vo = "LUN";
-        break;
-      case "Béziers":
-        code_vo = "BEZ";
-        break;
-      case "Carquefou":
-        code_vo = "CAQ";
-        break;
-      case "Cestas":
-        code_vo = "CET";
-        break;
-      case "Chanteloup-Les-Vignes":
-        code_vo = "CLV";
-        break;
-      case "Entzheim":
-        code_vo = "ENT";
-        break;
-      case "Gondreville":
-        code_vo = "GON";
-        break;
-      case "Gran Canaria":
-        code_vo = "GCA?_TEN?";
-        break;
-      case "Granada":
-        code_vo = "GRN";
-        break;
-      case "Guingamp":
-      case "CHÂTELAUDREN-PLOUAGAT":
-        code_vo = "GUI";
-        break;
-      case "Honguemare-Guenouville":
-        code_vo = "HON";
-        break;
-      case "La Chapelle D'Armentières":
-        code_vo = "LCA";
-        break;
-      case "Le Coudray-Montceaux":
-        code_vo = "LCM";
-        break;
-      case "Liffré":
-        code_vo = "LIF";
-        break;
-      case "Loures":
-        code_vo = "LOU";
-        break;
-      case "Lillers":
-        code_vo = "LIL";
-        break;
-      case "Saint Augustin":
-        code_vo = "SAI";
-        break;
-      case "Lunel":
-        code_vo = "LUN";
-        break;
-      case "Málaga":
-      case "Malaga":
-        code_vo = "MLG";
-        break;
-      case "Meaux":
-        code_vo = "MEA";
-        break;
-      case "Montchanin":
-        code_vo = "MON";
-        break;
-      case "Montoy Flanville":
-        code_vo = "MFV";
-        break;
-      case "Martorell":
-         code_vo = "MAT";
-        break;
-      case "Murcia":
-        code_vo = "MUR";
-        break;
-      case "Narón":
-        code_vo = "NAR";
-        break;
-      case "Palmela":
-        code_vo = "PAL";
-        break;
-      case "Pontcharra":
-        code_vo = "PCH";
-        break;
-      case "Plouagat":
-        code_vo = "PLO";
-        break;
-      case "Provence":
-      case "ROUSSET":
-      case "Rousset":
-        code_vo = "PRO";
-        break;
-      case "Sailly-lez-Cambrai":
-        code_vo = "SLC";
-        break;
-      case "Saint Quentin Fallavier":
-        code_vo = "SQF";
-        break;
-      case "Santo Tirso":
-        code_vo = "SAN";
-        break;
-      case "Sevilla":
-        code_vo = "SEV";
-        break;
-      case "Sintra":
-        code_vo = "SIN";
-        break;
-      case "Sorigny":
-        code_vo = "SOR";
-        break;
-      case "Tenerife":
-        code_vo = "GCA?_TEN?";
-        break;
-      case "Torres Novas":
-        code_vo = "TON";
-        break;
-      case "Tarragona":
-        code_vo = "TRG";
-        break;
-      case "Valencia":
-        code_vo = "VLC";
-        break;
-      case "Vars":
-        code_vo = "VAR";
-        break;
-      case "Vitoria":
-        code_vo = "VIT";
-        break;
-      default:
-        code_vo = "???";
-        break;
-    }
+ 
+/**
+ * Gets the reference code for a given location name.
+ * 
+ * @param {string} ref - The location name to get the code for
+ * @returns {string} The 3-letter code for the location, or "???" if not found
+ */
+function get_ref_code(ref) {
+  // Normalize the input by trimming whitespace and converting to consistent case
+  const normalizedRef = ref.trim().toLowerCase();
   
-    return code_vo;
+  // Create a lookup map for better performance and cleaner code
+  const codeMap = {
+    // France
+    'ablis': 'ABL',
+    'alcalá': 'ALC',
+    'alcala': 'ALC', // Alternative spelling
+    'arcs-sur-argens': 'ASA',
+    'barbery': 'BAR',
+    'baziège': 'BAZ',
+    'baziege': 'BAZ', // Alternative spelling
+    'beaucaire': 'LUN',
+    'béziers': 'BEZ',
+    'beziers': 'BEZ', // Alternative spelling
+    'carquefou': 'CAQ',
+    'cestas': 'CET',
+    'chanteloup-les-vignes': 'CLV',
+    'entzheim': 'ENT',
+    'gondreville': 'GON',
+    'guingamp': 'GUI',
+    'châtelaudren-plouagat': 'GUI',
+    'chatelaudren-plouagat': 'GUI', // Alternative spelling
+    'honguemare-guenouville': 'HON',
+    'la chapelle d\'armentières': 'LCA',
+    'le coudray-montceaux': 'LCM',
+    'liffré': 'LIF',
+    'liffre': 'LIF', // Alternative spelling
+    'loures': 'LOU',
+    'lillers': 'LIL',
+    'lunel': 'LUN',
+    'meaux': 'MEA',
+    'montchanin': 'MON',
+    'montoy flanville': 'MFV',
+    'plouagat': 'PLO',
+    'pontcharra': 'PCH',
+    'provence': 'PRO',
+    'rousset': 'PRO',
+    'sailly-lez-cambrai': 'SLC',
+    'saint quentin fallavier': 'SQF',
+    'saint augustin': 'SAI',
+    'sorigny': 'SOR',
+    'vars': 'VAR',
+    
+    // Spain
+    'barcelona': 'BCN',
+    'granada': 'GRN',
+    'málaga': 'MLG',
+    'malaga': 'MLG', // Alternative spelling
+    'murcia': 'MUR',
+    'sevilla': 'SEV',
+    'tarragona': 'TRG',
+    'valencia': 'VLC',
+    'vitoria': 'VIT',
+    'martorell': 'MAT',
+    
+    // Portugal
+    'palmela': 'PAL',
+    'santo tirso': 'SAN',
+    'sintra': 'SIN',
+    'torres novas': 'TON',
+    'narón': 'NAR',
+    'naron': 'NAR', // Alternative spelling
+    'loures': 'LOU',
+    
+    // Special cases
+    'gran canaria': 'GCA?_TEN?',
+    'tenerife': 'GCA?_TEN?',
+  };
+
+  // Check the map first
+  if (codeMap[normalizedRef]) {
+    return codeMap[normalizedRef];
   }
-  
+
+  // Handle any remaining special cases not caught by normalization
+  switch (normalizedRef) {
+    // Add any complex cases here if needed
+    default:
+      return '???';
+  }
+}
+
   // update avance info
   function load_other_day(selectedDate) {
     $.get("/Warenausgang/Tag?sort=StatusASC&selectedDate=" + switchDate(selectedDate), function (dataServ, textStatus, jqXHR) {
