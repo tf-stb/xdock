@@ -347,10 +347,7 @@ $("<style>").appendTo("head").html(`
   
  
         
-.countdown-number {
-  position: absolute;
-  font-weight: bold;
-}
+ 
 
 .countdown-container {
     left: 0px;
@@ -359,34 +356,28 @@ $("<style>").appendTo("head").html(`
     display: flex;
     gap: 20px;
     background: #fff;
-    padding: 25px 20px !important;
+    padding: 15px 20px !important;
     width: 29.7cm;
 }
-
+.countItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
 .countdown-number {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #333;
-  margin: 0.7rem 0;
+ font-size: 2rem;
+    font-weight: bold;
+    color: #333;
 }
 
 .divider-count {
   display: block;
-  height: 44px;
+ 
   background-color: #eee;
-  width: 1px;
+  width: 2px;
 }
-  .border-hightlight {
-    height: 100%;
-    width: 5px;
-    background: #003278;
-    position: absolute;
-    left: 0px;
-    top: 0;
-    
-    
-}
-  
+ 
 
   `);
   
@@ -822,15 +813,15 @@ $("<style>").appendTo("head").html(`
 
   
         <div class="countdown-container">
-        <div class="border-hightlight"></div>
+        
         <div class="countItem ml-2">
          <div class="countdown-number" id="noZoneCount">0</div>
-        <p> SM non zonés</p>
+        <div> SM non zonés</div>
         </div>
 <div class="divider-count"></div>
            <div class="countItem">
              <div class="countdown-number" id="readyToLoad">0</div>
-        <p> Possibilité de chargement</p>
+        <div> Possibilité de chargement</div>
         </div>
         
       
