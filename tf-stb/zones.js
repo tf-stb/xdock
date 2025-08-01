@@ -896,7 +896,7 @@ $("<style>").appendTo("head").html(`
 $('#noZoneCount').text(noZoneElements.length);
 
  
-const readyElements = data.find(':is([class^="waStatus70"],[class^="waStatus71"],[class^="waStatus72"],[class^="waStatus75"])');
+const readyElements = data.find(':is([class^="waStatus71"],[class^="waStatus72"],[class^="waStatus75"])');
 $('#readyToLoad').text(readyElements.length);
  
 
