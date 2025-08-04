@@ -1,6 +1,6 @@
 //***************************//
 // TF-STB Map add-on for XDock PRO
-// Dernière mise à jour le  17/07/2025
+// Dernière mise à jour le  04/08/2025
 //***************************//
 
 $("<style>").appendTo("head").html(`
@@ -378,6 +378,10 @@ $("<style>").appendTo("head").html(`
   width: 2px;
 }
  
+.double-zonage {
+  border: 2px dashed red;
+  background-color: rgba(255, 0, 0, 0.1) !important;
+}
 
   `);
   
@@ -841,9 +845,10 @@ $("<style>").appendTo("head").html(`
       </h1>
   </div>
   <div class="col-6 text-right">
+  <button class="btn btn-sm btn-outline-primary mr-10" style="height: 50%;" id="check-double-zonage"  ><span class="fa fa-search  mr-10"></span>Vérifier double zonage</button>
   <button class="btn btn-sm btn-outline-primary" style="height: 50%;" id="zones_preliv"  ><span class="fa fa-boxes mr-10"></span>Zones de pré-livraison</button>
   
-   
+
   </div>
   </div>`);
   
@@ -904,6 +909,7 @@ $('#readyToLoad').text(readyElements.length);
     $(data.find("#ZoneBase>select>option")).each(function (index, value) {
       let option = $(value);
       let zoneID = parseInt(option.val());
+     
       // check if is taken
       if (option.hasClass("zone-in-verwendung-auslieferungstermin")) {
         let tr_children = data
@@ -984,6 +990,8 @@ $('#readyToLoad').text(readyElements.length);
     });
   
     updated_zones = zone_info;
+
+    
   
     // update map
     update_map();
@@ -1252,7 +1260,10 @@ function get_ref_code(ref) {
           case content.toLowerCase().includes("stock"):
             $("#" + zoneName).html("Stock");
             break;
-  
+          case content.toLowerCase().includes("groupage"):
+            $("#" + zoneName).html("Groupage");
+            break;
+
           default:
             $("#" + zoneName).html("???");
         }
@@ -1260,5 +1271,28 @@ function get_ref_code(ref) {
     });
   });
   
+// Check for double zonage
+// This function checks for zones that are assigned to more than one SM
+$(document).on("click", "#check-double-zonage", function () {
+   $.get("/ToreZonenCluster/ToreZonenIndex", function (dataServ, textStatus, jqXHR) {
+      let data = $(dataServ);
+     // let doubleZonage = data.find("#zonen-table>tbody>tr:has(td:nth-child(7):contains('2'))");
+      let doubleZonage = 0;
+      $(data.find("#zonen-table>tbody>tr")).each(function (index, value) {
 
- 
+        if (parseInt(value.cells[6].innerText.trim()) > 1) {
+          // Do something if the zone is double booked
+         // console.log("Zone " + value.cells[0].innerText.trim() + " is double zoned.");
+         $(`[zone="${value.cells[1].innerText.trim()}"]`).addClass("double-zonage");
+           toastr.warning(`Attention : la zone « ${value.cells[1].innerText.trim()} » est affectée à deux SM. Veuillez vérifier les zones.`,);
+          doubleZonage++;
+        }
+      });
+         if(doubleZonage > 0){
+          toastr.error(`Double zonage détecté`);
+        }else{
+          toastr.success("Aucun double zonage détecté");
+        }
+
+    });
+  });
