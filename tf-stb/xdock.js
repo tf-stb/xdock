@@ -1,8 +1,8 @@
 //***************************//
 // XDock PRO - STEF Strasburg
-// Dernière mise à jour le 22/10/2025
+// Dernière mise à jour le 19/11/2025
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.10_22/10/2025- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.11_19/11/2025- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -229,6 +229,7 @@ button#paste_palettes {
   margin-top: 20px;
   text-align: right;
 }
+  .fuellgradAnzeigeFilteredTouren {font-weight: bold;}
  `);
 
 //--------------------------
@@ -1506,4 +1507,51 @@ function DemanderPrioritaire(){
   $("#saveBtn").trigger("click")
 }
 
+//-----------------------------------//
+// Niveau remplis total des palettes //
+//-----------------------------------// 
+function statistiques_des_palettes() {
+  let palettes = [];
+  $('[aria-label="PalettenStatusListeTable1"] tbody>tr:not([style="display: none"]),[aria-label="PalettenStatusListeTable2"] tbody>tr:not([style="display: none"])')
+    .each(function (indexInArray, valueOfElement) {
+      let value = valueOfElement.cells[1];
+      if (value) {
+        palettes.push(parseInt(value.innerText.trim()));
+      }
+    });
 
+  let rest_to_unloding = palettes[0] + palettes[1] + palettes[2];
+  // add to dom
+ $(".fuellgradAnzeigeFilteredTouren").parent().attr("data-original-title",`Il reste à décharger <strong>${rest_to_unloding}</strong> palettes, soit environ <strong>${Math.ceil(rest_to_unloding / 33)}</strong> camions.`);
+
+
+  // Data for the pie chart
+  const data = [
+    { value: palettes[0] }, //non efacty
+    { value: palettes[1]}, //Ouverte
+    { value: palettes[2] }, // parc
+    { value: palettes[3] }, // EM en cours
+    { value: palettes[4] }, // cas particles
+    { value: palettes[5] }, // en stock
+    { value: palettes[6] }, // SM en cours
+    { value: palettes[7] }, // termine
+  ];
+
+      let total = data.reduce((sum, item) => sum + item.value, 0);
+
+ 
+    let pal_progressbar_width = `width: ${getTaskCompletionPercentage(total, palettes[4] + palettes[5] + palettes[6] + palettes[7])}%`;
+    $(".fuellgradAnzeigeFilteredTouren").attr("style", pal_progressbar_width);
+    $(".fuellgradAnzeigeFilteredTouren").html(
+      `${palettes[4] + palettes[5] + palettes[6] + palettes[7]} / ${total} (${getTaskCompletionPercentage(total, palettes[4] + palettes[5] + palettes[6] + palettes[7])}%)`
+    );
+
+function getTaskCompletionPercentage(totalTasks, finishedTasks) {
+  return ((finishedTasks / totalTasks) * 100).toFixed(2);
+}
+
+}
+
+if (window.location.href.includes("Warenausgang/Tag")) {
+  statistiques_des_palettes();
+}
