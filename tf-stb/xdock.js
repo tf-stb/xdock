@@ -229,7 +229,6 @@ button#paste_palettes {
   margin-top: 20px;
   text-align: right;
 }
-  .fuellgradAnzeigeFilteredTouren {font-weight: bold;}
  `);
 
 //--------------------------
@@ -1555,3 +1554,4 @@ function getTaskCompletionPercentage(totalTasks, finishedTasks) {
 if (window.location.href.includes("Warenausgang/Tag")) {
   statistiques_des_palettes();
 }
+
