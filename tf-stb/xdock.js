@@ -1,8 +1,8 @@
 //***************************//
 // XDock PRO - STEF Strasburg
-// Dernière mise à jour le 19/11/2025
+// Dernière mise à jour le 28/11/2025
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.11_19/11/2025- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.11_28/11/2025- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -1562,5 +1562,6 @@ function getTaskCompletionPercentage(totalTasks, finishedTasks) {
 if (window.location.href.includes("Warenausgang/Tag")) {
   statistiques_des_palettes();
 }
+
 
 
