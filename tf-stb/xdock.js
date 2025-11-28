@@ -1451,7 +1451,7 @@ function check_zoning() {
 }
 
 //--------------------------------
-// Demander la priorité & afficher le temps
+// Demander la priorité & afficher le temps & commentaire interne
 //--------------------------------
 
 $(document).ready(function() {
@@ -1498,6 +1498,15 @@ $(document).ready(function() {
       
      
     }
+
+   // 3. add comment to table   
+   $("#yard-table thead tr")[0].cells[8].innerHTML = "<th>Commentaire interne / À l'heure</th>"; // Add new header  
+
+    const commentMatch = tooltipText.match(/Commentaire interne:<\/strong>([^<]*)/);
+    if (commentMatch) {
+      const comment = commentMatch[1].trim();
+      $row.find('td').eq(8).html(comment.substring(0, 25) + (comment.length > 25 ? "..." : "")  ); // show only 25 characters
+    }
   });
 });
 
@@ -1505,7 +1514,6 @@ function DemanderPrioritaire(){
   $("#kommentarIntern").val($("#kommentarIntern").val() + "\n #priorité")
   $("#saveBtn").trigger("click")
 }
-
 //-----------------------------------//
 // Niveau remplis total des palettes //
 //-----------------------------------// 
@@ -1554,4 +1562,5 @@ function getTaskCompletionPercentage(totalTasks, finishedTasks) {
 if (window.location.href.includes("Warenausgang/Tag")) {
   statistiques_des_palettes();
 }
+
 
