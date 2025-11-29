@@ -1,8 +1,8 @@
 //***************************//
 // XDock PRO - STEF Strasburg
-// Dernière mise à jour le 28/11/2025
+// Dernière mise à jour le 29/11/2025
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.11_28/11/2025- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.13_29/11/2025- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -510,6 +510,7 @@ if (isEMTour) {
           <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">Entrée de marchandises:</div>
               <button class="dropdown-item" onclick="copy_em_id()"><span class="fal fa-copy  mr-10"></span> Copier EM ID</button>
               <button class="dropdown-item" onclick="fill_empty_LS()"><span class="fal fa-file-alt docImage  mr-10"></span>  Remplir tous les "Nº LS" vides avec "X"</button>
+              <button class="dropdown-item" onclick="updatePalettes()"><span class="fal fa-edit  mr-10"></span> Mettre à jour les notes des positions sélectionnées</button>
               <hr>
               <button class="dropdown-item" onclick="check_all_sscc()"><span class="fal fa-barcode  mr-10"></span> Vérifier toutes les SSCC</button>
               <button class="dropdown-item" onclick="check_avance()"><span class="fal fa-calendar-alt  mr-10"></span> Vérifier l'avance</button>
@@ -1564,4 +1565,146 @@ if (window.location.href.includes("Warenausgang/Tag")) {
 }
 
 
+//-----------------------------------//
+// Update Palettes
+//-----------------------------------// 
 
+function updatePalettes(){
+    if($('tr.to-be-deleted').length == 0) return toastr.error(`Aucune positions sélectionnée.`);
+
+    function updatePalettesNotes() {
+    const options = [
+        "Cartons déchirés",
+        "Cartons enfoncés",
+        "Cartons déplacés",
+        "Marchandise instable",
+        "Palette qui penche",
+        "Palette insuffisamment filmée",
+        "Film arraché",
+        "Colis incomplet"
+    ];
+
+    // Create modal HTML
+    $('#barcode_modal').html(createModalHTML(options)).modal('show');
+
+    // Add event handlers
+    setupEventHandlers();
+    }
+
+    function createModalHTML(options) {
+        const optionsHTML = options.map((label, index) => `
+            <a href="#" class="list-group-item list-group-item-action" data-value="${index}">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="${index}" id="option${index}">
+                    <label class="form-check-label" for="option${index}">${label}</label>
+                </div>
+            </a>
+        `).join('');
+
+        return `
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Sélectionner les options</h5>
+                    </div>
+                    <div class="modal-body">
+                        <div class="list-group" style="max-height: 300px; overflow-y: auto;">
+                            ${optionsHTML}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="window.location.reload()">Annuler</button>
+                        <button type="button" class="btn btn-primary" id="updateOptionsBtn">Mettre à jour</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function setupEventHandlers() {
+        // Toggle checkboxes when clicking list items
+        $('#barcode_modal').on('click', '.list-group-item', function(e) {
+            e.preventDefault();
+            const checkbox = $(this).find('.form-check-input');
+            checkbox.prop('checked', !checkbox.prop('checked'));
+            $(this).toggleClass('active', checkbox.prop('checked'));
+        });
+
+        // Handle update button click
+        $('#barcode_modal').on('click', '#updateOptionsBtn', handleUpdate);
+    }
+
+    function handleUpdate() {
+        const $btn = $(this);
+        if ($btn.data('working')) return;
+
+        const selectedOptions = getSelectedOptions();
+        $btn.data('working', true)
+            .attr('disabled', true)
+            .html('<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> <span role="status">Mise à jour...</span>');
+
+        updateSelectedPalettes(selectedOptions);
+    }
+
+    function getSelectedOptions() {
+        return $('#barcode_modal .form-check-input:checked')
+            .map((_, el) => parseInt($(el).val()))
+            .get();
+    }
+
+    function extractFormData(data, selectedOptions) {
+        const $data = $(data);
+        const formData = {
+            WeTourId: $data.find('#WeTourId').val(),
+            WeTourLpId: $data.find('#WeTourLpId').val(),
+            __RequestVerificationToken: $data.find('input[name="__RequestVerificationToken"]').val(),
+            Paletten: []
+        };
+
+        $data.find('tr[class^="paletteIdTr_"]').each(function(index) {
+            const palette = {
+                PaletteId: $data.find(`#Paletten_${index}__PaletteId`).val(),
+                Gewicht: $data.find(`#Paletten_${index}__Gewicht`).val(),
+                GelieferteKolli: $data.find(`#Paletten_${index}__GelieferteKolli`).val(),
+                GelieferterWarentraeger: $data.find(`#Paletten_${index}__GelieferterWarentraeger`).val(),
+                IsGelieferteTauschpalette: $data.find(`#Paletten_${index}__IsGelieferteTauschpalette`).val(),
+                KlaerungsgrundId: $data.find(`#Paletten_${index}__KlaerungsgrundId`).val(),
+                Vermerk: selectedOptions,
+                GemesseneTemperatur1: $data.find(`#Paletten_${index}__GemesseneTemperatur1`).val(),
+                GemesseneTemperatur2: $data.find(`#Paletten_${index}__GemesseneTemperatur2`).val(),
+                GemesseneTemperatur3: $data.find(`#Paletten_${index}__GemesseneTemperatur3`).val(),
+                MinProduktTemperatur: $data.find(`#Paletten_${index}__MinProduktTemperatur`).val(),
+                MaxProduktTemperatur: $data.find(`#Paletten_${index}__MaxProduktTemperatur`).val(),
+                Sscc: $data.find(`#Paletten_${index}__Sscc`).val(),
+                Kommentar: $data.find(`#Paletten_${index}__Kommentar`).val()
+            };
+            
+            formData.Paletten.push(palette);
+        });
+
+        return formData;
+    }
+
+    function updateSelectedPalettes(selectedOptions) {
+        const $palettesToDelete = $('tr.to-be-deleted');
+        let palettesUpdated = 0;
+
+        $palettesToDelete.each(function() {
+            const paletteID = $(this).data('welpid');
+            
+            $.get(`/Wareneingang/WeTourLpPaletten?weTourLpId=${paletteID}`, function(response) {
+                const formData = extractFormData(response, selectedOptions);
+                
+                $.post(`/Wareneingang/WeTourLpPaletten?weTourLpId=${formData.WeTourLpId}`, formData, function() {
+                    palettesUpdated++;
+                    if (palettesUpdated === $palettesToDelete.length) {
+                        window.location.reload();
+                    }
+                });
+            });
+        });
+    }
+
+
+    updatePalettesNotes()
+}
