@@ -1605,7 +1605,7 @@ function updatePalettes(){
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Sélectionner les options</h5>
+                        <h5 class="modal-title">Choisir jusqu'à 4 notes</h5>
                     </div>
                     <div class="modal-body">
                         <div class="list-group" style="max-height: 300px; overflow-y: auto;">
@@ -1708,3 +1708,4 @@ function updatePalettes(){
 
     updatePalettesNotes()
 }
+
