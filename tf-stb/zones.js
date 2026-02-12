@@ -1368,7 +1368,7 @@ $.get("/Spediteure/EditSpediteur/59142", function (data_dom, textStatus, jqXHR) 
 
   $(document.body).append(`
     <div id="note--map-container">
-        <h1 class="p-3">Informations importantes:</h1>
+        <h1 class="p-3">Informations supplémentaires:</h1>
         <textarea id="note-map" class="note-textarea" style="background-color: #fff8b8;">${note.note || ''}</textarea>
         <span class="divider"></span>
         
@@ -1439,3 +1439,4 @@ function delete_mapnote() {
  
 const date_notemap = new Date();
 const last_edit_notemap = new Date().toLocaleString("fr-FR", { hour12: false });
+
