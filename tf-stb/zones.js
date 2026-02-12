@@ -1,6 +1,6 @@
 //***************************//
 // TF-STB Map add-on for XDock PRO
-// Dernière mise à jour le  04/08/2025
+// Dernière mise à jour le  12/02/2026
 //***************************//
 
 $("<style>").appendTo("head").html(`
@@ -18,7 +18,7 @@ $("<style>").appendTo("head").html(`
       zoom:100% !important;
     }
   
-    .container-fluid.mt-3,#xdock_pro_page_header,.countdown-container {
+    .container-fluid.mt-3,#xdock_pro_page_header,.countdown-container,#note--map-container {
       display: none !important;
   }
   
@@ -367,8 +367,7 @@ $("<style>").appendTo("head").html(`
 }
 .countdown-number {
  font-size: 2rem;
-    font-weight: bold;
-    color: #333;
+     color: #333;
 }
 
 .divider-count {
@@ -381,6 +380,27 @@ $("<style>").appendTo("head").html(`
 .double-zonage {
   border: 2px dashed red;
   background-color: rgba(255, 0, 0, 0.1) !important;
+}
+
+
+#note--map-container {
+    position: absolute;
+    top: 185px;
+    left: 50px;
+    max-width: 400px;
+}
+.note-textarea {
+    width: 340px;
+    height: 300px;
+    padding: 10px;
+    border: none;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    resize: vertical;
+    box-sizing: border-box;
+    max-width: 100% !important;
+
+    resize: none;
 }
 
   `);
@@ -822,11 +842,23 @@ $("<style>").appendTo("head").html(`
          <div class="countdown-number" id="noZoneCount">0</div>
         <div> SM non zonés</div>
         </div>
-<div class="divider-count"></div>
+          <div class="divider-count"></div>
            <div class="countItem">
-             <div class="countdown-number" id="readyToLoad">0</div>
-        <div> Possibilité de chargement</div>
-        </div>
+              <div class="countdown-number" id="readyToLoad">0</div>
+              <div> Dans l’entrepôt</div>
+          </div>
+           <div class="divider-count"></div>
+           <div class="countItem">
+              <div class="countdown-number" id="SMenZT">0</div>
+              <div> Pré-chargement (ZT)</div>
+          </div>
+
+           <div class="divider-count"></div>
+           <div class="countItem">
+              <div class="countdown-number" id="ZonesBloquees">0%</div>
+              <div> Zones bloquées</div>
+          </div>
+        
         
       
        </div>
@@ -851,6 +883,8 @@ $("<style>").appendTo("head").html(`
 
   </div>
   </div>`);
+
+
   
   /* Status
    - free
@@ -868,7 +902,8 @@ $("<style>").appendTo("head").html(`
   
   let updated_zones;
   let LastModified;
-  
+  let SMenZT =0;
+
   $("#selectedDate").on("change", function (e) {
     // reset map
     $("#a4").replaceWith(a4);
@@ -898,18 +933,22 @@ $("<style>").appendTo("head").html(`
 
   
  const noZoneElements = data.find('[class*="waStatus10"]');
-$('#noZoneCount').text(noZoneElements.length);
+ const SMReady = data.find('[class*="waStatus75"]');
 
- 
-const readyElements = data.find(':is([class^="waStatus71"],[class^="waStatus72"],[class^="waStatus75"])');
-$('#readyToLoad').text(readyElements.length);
+$('#noZoneCount').text(noZoneElements.length);
  
 
     // loop for zone alredy teken
     $(data.find("#ZoneBase>select>option")).each(function (index, value) {
       let option = $(value);
       let zoneID = parseInt(option.val());
-     
+
+      // GET VALUE for the selected option
+ 
+      SMenZT += option.hasClass("zone-in-verwendung-auslieferungstermin") && option.html().trim().startsWith("ZT") ? 1 : 0;     
+      $('#SMenZT').text(SMenZT);
+      $('#readyToLoad').text((SMReady.length - SMenZT));
+
       // check if is taken
       if (option.hasClass("zone-in-verwendung-auslieferungstermin")) {
         let tr_children = data
@@ -918,6 +957,8 @@ $('#readyToLoad').text(readyElements.length);
           .children();
         let ref = get_ref_code(tr_children[6].innerText.trim());
         let SM_ID = tr_children[0].innerText.trim()
+
+        
        
   
         if (ref == "GCA?_TEN?") {
@@ -1034,6 +1075,17 @@ $('#readyToLoad').text(readyElements.length);
     $("#total_de_hier").html("(" + $(".de_hier").not(".color").length + ")");
     $("#total_de_avance").html("(" + $(".de_avance").not(".color").length + ")");
     $("#total_blocked").html("(" + $(".blocked").not(".color").length + ")");
+
+    
+    // update percentage of blocked zones
+    $("#ZonesBloquees").html(($(".blocked").not(".color").length / 90 * 100).toFixed(2) + "%");
+
+    // if zone bloked more then 15% make the counter red
+    if (($(".blocked").not(".color").length / 90 * 100) > 15) {
+      $("#ZonesBloquees").addClass("text-danger");  
+    } else {
+      $("#ZonesBloquees").removeClass("text-danger");  
+    }
 
     // hendel on shift click open SM URL
     $(document).on("click","a[zone]",function(e){
@@ -1296,3 +1348,94 @@ $(document).on("click", "#check-double-zonage", function () {
 
     });
   });
+
+
+
+
+
+
+
+
+//--------------------------------
+// Note
+//--------------------------------
+let savedNoteMapToken = "";
+
+$.get("/Spediteure/EditSpediteur/59142", function (data_dom, textStatus, jqXHR) {
+  let data_textarea = $(data_dom).find("#SpediteurKommentar").val();
+  let note = JSON.parse(data_textarea);
+  savedNoteMapToken = $(data_dom).find('input[name="__RequestVerificationToken"]').val();
+
+  $(document.body).append(`
+    <div id="note--map-container">
+        <h1 class="p-3">Informations importantes:</h1>
+        <textarea id="note-map" class="note-textarea" style="background-color: #fff8b8;">${note.note || ''}</textarea>
+        <span class="divider"></span>
+        
+        <div class="note-toolbar">
+          <small>${note.last_edit || 'inconnue'} par ${note.editby || 'inconnu'}</small>
+          <div>
+            <span class="fas fa-trash mr-10 pointer" onclick="delete_mapnote()"></span>
+            <button class="btn btn-primary  btn-sm" onclick="save_Note_Map()">Enregistrer</button>
+          </div>
+        </div>
+      </div>`);
+
+  $('.note-toolbar div span').on('mousedown', function (e) {
+    e.preventDefault();
+  });
+});
+
+  // inset note
+  $(document.body).append(`  
+    
+     `);
+ 
+
+function save_Note_Map() {
+ 
+  const mapNote = document.getElementById('note-map').value;
+  const editby = $(".fa-sign-out").attr("data-original-title").replace("Logout", "").replace("@xdock.de", "");
+
+  let JSON_data = JSON.stringify({
+    note: mapNote,
+    last_edit: last_edit_notemap,
+    editby: editby
+  });
+
+  const data = {
+    SpediteurId: 59142,
+    SpediteurName: 'notemap',
+    SpediteurStrasseUndHausnummer: "",
+    SpediteurPlz: "",
+    SpediteurOrt: "",
+    SpediteurTelefon: "",
+    SpediteurUstId: "",
+    SpediteurLizenznummer: "",
+    LandId: "",
+    IsInactive: true,
+    SpediteurKommentar: JSON_data,
+    __RequestVerificationToken: savedNoteMapToken
+  };
+
+  $.ajax({
+    url: '/Spediteure/EditSpediteur/59142',
+    type: 'POST',
+    data: data,
+    success: function (response) {
+      toastr.success(`Données envoyées avec succès!`);
+    },
+    error: function (xhr, status, error) {
+      console.error('Error:', xhr.responseText);
+      toastr.error(`Une erreur s'est produite lors de l'envoi des données.`);
+    }
+  });
+}
+
+function delete_mapnote() {
+  document.getElementById('note-map').value = "";
+}
+
+ 
+const date_notemap = new Date();
+const last_edit_notemap = new Date().toLocaleString("fr-FR", { hour12: false });
