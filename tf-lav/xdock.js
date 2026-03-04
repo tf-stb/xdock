@@ -678,7 +678,7 @@ $('.navbar [href="/Artikel/Artikel"]').after(`
 <a class="dropdown-item" href="/#cockpit" target="_blank">SMART Cockpit</a>
 <a class="dropdown-item" href="/#portes" target="_blank">Gestion des portes</a>
 <a class="dropdown-item" href="/#zones" target="_blank">Gestion des zones</a>
-<a class="dropdown-item" href="https://tf-stb.github.io/outils/" target="_blank">Liste des Outils </a>
+<a class="dropdown-item" href="https://tf-stb.com/iot/" target="_blank">TF-STB IoT </a>
 
 `);
 
@@ -1079,4 +1079,5 @@ function formatDate_pro(date) {
 }
 
 const date_note = new Date();
+
 const last_edit = formatDate_pro(date_note);
