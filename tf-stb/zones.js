@@ -380,10 +380,9 @@ $("<style>").appendTo("head").html(`
   background-color: rgba(255, 0, 0, 0.1) !important;
 }
 
-
-
-
-
+footer {
+    margin-top: 140px;
+}
   `);
   
   let a4 = `
@@ -1329,5 +1328,6 @@ $(document).on("click", "#check-double-zonage", function () {
 
     });
   });
+
 
 
