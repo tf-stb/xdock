@@ -825,12 +825,12 @@ footer {
           <div class="divider-count"></div>
            <div class="countItem">
               <div class="countdown-number" id="readyToLoad">0</div>
-              <div> Dans l’entrepôt</div>
+              <div> Camion en attente de chargement</div>
           </div>
            <div class="divider-count"></div>
            <div class="countItem">
               <div class="countdown-number" id="SMenZT">0</div>
-              <div> Pré-chargement (ZT)</div>
+              <div> Pré-chargement en cours</div>
           </div>
 
            <div class="divider-count"></div>
@@ -1328,6 +1328,7 @@ $(document).on("click", "#check-double-zonage", function () {
 
     });
   });
+
 
 
 
