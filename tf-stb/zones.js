@@ -350,9 +350,7 @@ $("<style>").appendTo("head").html(`
  
 
 .countdown-container {
-    left: 0px;
-    bottom: -105px;
-    position: absolute;
+    margin-top: 60px !important;
     display: flex;
     gap: 20px;
     background: #fff;
@@ -383,25 +381,8 @@ $("<style>").appendTo("head").html(`
 }
 
 
-#note--map-container {
-    position: absolute;
-    top: 185px;
-    left: 50px;
-    max-width: 400px;
-}
-.note-textarea {
-    width: 340px;
-    height: 300px;
-    padding: 10px;
-    border: none;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    resize: vertical;
-    box-sizing: border-box;
-    max-width: 100% !important;
 
-    resize: none;
-}
+
 
   `);
   
@@ -1349,94 +1330,4 @@ $(document).on("click", "#check-double-zonage", function () {
     });
   });
 
-
-
-
-
-
-
-
-//--------------------------------
-// Note
-//--------------------------------
-let savedNoteMapToken = "";
-
-$.get("/Spediteure/EditSpediteur/59142", function (data_dom, textStatus, jqXHR) {
-  let data_textarea = $(data_dom).find("#SpediteurKommentar").val();
-  let note = JSON.parse(data_textarea);
-  savedNoteMapToken = $(data_dom).find('input[name="__RequestVerificationToken"]').val();
-
-  $(document.body).append(`
-    <div id="note--map-container">
-        <h1 class="p-3">Informations supplémentaires:</h1>
-        <textarea id="note-map" class="note-textarea" style="background-color: #fff8b8;">${note.note || ''}</textarea>
-        <span class="divider"></span>
-        
-        <div class="note-toolbar">
-          <small>${note.last_edit || 'inconnue'} par ${note.editby || 'inconnu'}</small>
-          <div>
-            <span class="fas fa-trash mr-10 pointer" onclick="delete_mapnote()"></span>
-            <button class="btn btn-primary  btn-sm" onclick="save_Note_Map()">Enregistrer</button>
-          </div>
-        </div>
-      </div>`);
-
-  $('.note-toolbar div span').on('mousedown', function (e) {
-    e.preventDefault();
-  });
-});
-
-  // inset note
-  $(document.body).append(`  
-    
-     `);
- 
-
-function save_Note_Map() {
- 
-  const mapNote = document.getElementById('note-map').value;
-  const editby = $(".fa-sign-out").attr("data-original-title").replace("Logout", "").replace("@xdock.de", "");
-
-  let JSON_data = JSON.stringify({
-    note: mapNote,
-    last_edit: last_edit_notemap,
-    editby: editby
-  });
-
-  const data = {
-    SpediteurId: 59142,
-    SpediteurName: 'notemap',
-    SpediteurStrasseUndHausnummer: "",
-    SpediteurPlz: "",
-    SpediteurOrt: "",
-    SpediteurTelefon: "",
-    SpediteurUstId: "",
-    SpediteurLizenznummer: "",
-    LandId: "",
-    IsInactive: true,
-    SpediteurKommentar: JSON_data,
-    __RequestVerificationToken: savedNoteMapToken
-  };
-
-  $.ajax({
-    url: '/Spediteure/EditSpediteur/59142',
-    type: 'POST',
-    data: data,
-    success: function (response) {
-      toastr.success(`Données envoyées avec succès!`);
-    },
-    error: function (xhr, status, error) {
-      console.error('Error:', xhr.responseText);
-      toastr.error(`Une erreur s'est produite lors de l'envoi des données.`);
-    }
-  });
-}
-
-function delete_mapnote() {
-  document.getElementById('note-map').value = "";
-}
-
- 
-const date_notemap = new Date();
-const last_edit_notemap = new Date().toLocaleString("fr-FR", { hour12: false });
 
