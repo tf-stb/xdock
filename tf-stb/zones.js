@@ -1,6 +1,6 @@
 //***************************//
 // TF-STB Map add-on for XDock PRO
-// Dernière mise à jour le 12/03/2026
+// Dernière mise à jour le 15/03/2026
 //***************************//
 
 $("<style>").appendTo("head").html(`
@@ -38,11 +38,6 @@ $("<style>").appendTo("head").html(`
     border-radius: 8px;
   }
 
- 
-
-[zone]{
-box-shadow:0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
-}
   #a4 > * { box-sizing: border-box; margin: 0; padding: 0; }
   #map-border {
     height: 90%;
@@ -132,39 +127,77 @@ box-shadow:0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
     /* ══════════════════════════════════════════
        COUNTDOWN CONTAINER
     ══════════════════════════════════════════ */
+   /* ══ CONTAINER ══ */
     .countdown-container {
       width: 100%;
       background: #ffffff;
       overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
       margin-top: 65px !important;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    border-radius: 8px;
     }
 
-    /* ══════════════════════════════════════════
-       TIMELINE SECTION
-    ══════════════════════════════════════════ */
-    .timeline-section {
-      padding: 28px 32px 24px;
-    }
+    /* ══ TIMELINE SECTION ══ */
+    .timeline-section { padding: 28px 20px 24px; }
 
     .timeline-title {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
-      color: #1f1f1f;
+      color: #1e2340;
       text-transform: uppercase;
-      margin-bottom: 24px;
+      letter-spacing: 0.8px;
+      margin-bottom: 0;
+    border-bottom: 1px solid #eaecf2;
+    padding-bottom: 10px;  
     }
 
-    /* ── Track ── */
+    /* ════════════════════════════════════════
+       THREE-ROW LAYOUT
+       .tl-top    → action-requise subs (above)
+       .tl-track  → main nodes row (center)
+       .tl-bottom → info subs (below)
+    ════════════════════════════════════════ */
+
+    /* shared wrapper for all three rows */
+    .tl-rows {
+      margin-top: 16px;
+    }
+
+    /* ── TOP ROW (action-requise) ── */
+    .tl-top {
+      display: flex;
+      align-items: flex-end;      /* subs anchor at bottom, closest to main */
+      position: relative;
+      padding-bottom: 0;
+    }
+
+    /* ── MAIN TRACK ── */
     .tl-track {
       display: flex;
       align-items: flex-start;
       position: relative;
+      margin-top: 16px;
     }
 
-    /* ── Individual step ── */
-    .tl-step {
+    /* ── BOTTOM ROW (info subs) ── */
+    .tl-bottom {
+      display: flex;
+      align-items: flex-start;    /* subs anchor at top, closest to main */
+      position: relative;
+    }
+
+    /* ── column cell shared by all three rows ── */
+    .tl-cell {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+        margin-top: 10px;  
+    }
+
+    /* ── Main node ── */
+    .tl-node {
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -172,174 +205,147 @@ box-shadow:0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
       position: relative;
     }
 
-    /* connector line between steps */
-    .tl-step:not(:last-child)::after {
+    /* horizontal connector between main nodes */
+    .tl-node:not(:last-child)::after {
       content: '';
       position: absolute;
       top: 17px;
       left: calc(50% + 20px);
       right: calc(-50% + 20px);
       height: 2px;
-      background: #e3e6ef;
       z-index: 0;
-      transition: background 0.3s ease;
+      background: #e3e6ef;
     }
-    .tl-step.done:not(:last-child)::after   { background: #27ae60; }
-    .tl-step.active:not(:last-child)::after { background: #2980b9; }
-    .tl-step.warn:not(:last-child)::after   { background: #e67e22; }
-    .tl-step.danger:not(:last-child)::after { background: #c0392b; }
-    .tl-step.info:not(:last-child)::after   { background: #5dade2; }
+    .tl-node.danger:not(:last-child)::after { background: #c0392b; }
+    .tl-node.info:not(:last-child)::after   { background: #5dade2; }
+    .tl-node.active:not(:last-child)::after { background: #2980b9; }
+    .tl-node.warn:not(:last-child)::after   { background: #e67e22; }
+    .tl-node.done:not(:last-child)::after   { background: #27ae60; }
+    .tl-node.idle:not(:last-child)::after   { background: #c0c5d8; }
 
     /* ── Icon circle ── */
     .tl-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid #dde1ea;
-      background: #f3f4f8;
-      position: relative;
-      z-index: 1;
-      transition: all 0.2s ease;
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid #dde1ea; background: #f3f4f8;
+      position: relative; z-index: 1;
+      font-size: 14px; color: #9aa0b8;
     }
-    .tl-icon svg { width: 16px; height: 16px; }
+    .tl-node.done   .tl-icon { background: #27ae60; border-color: #27ae60; color: #fff; }
+    .tl-node.active .tl-icon { background: #2980b9; border-color: #2980b9; color: #fff; box-shadow: 0 0 0 5px rgba(41,128,185,.14); }
+    .tl-node.warn   .tl-icon { background: #e67e22; border-color: #e67e22; color: #fff; box-shadow: 0 0 0 5px rgba(230,126,34,.12); }
+    .tl-node.danger .tl-icon { background: #c0392b; border-color: #c0392b; color: #fff; box-shadow: 0 0 0 5px rgba(192,57,43,.12); }
+    .tl-node.info   .tl-icon { background: #5dade2; border-color: #5dade2; color: #fff; box-shadow: 0 0 0 5px rgba(93,173,226,.14); }
+    .tl-node.idle   .tl-icon { background: #eaecf2; border-color: #c5cad8; color: #7b829a; }
 
-    /* state: done — green */
-    .tl-step.done .tl-icon {
-      background: #27ae60;
-      border-color: #27ae60;
-    }
-    /* state: active — blue */
-    .tl-step.active .tl-icon {
-      background: #2980b9;
-      border-color: #2980b9;
-      box-shadow: 0 0 0 5px rgba(41, 128, 185, 0.14);
-    }
-    /* state: warn — orange */
-    .tl-step.warn .tl-icon {
-      background: #e67e22;
-      border-color: #e67e22;
-      box-shadow: 0 0 0 5px rgba(230, 126, 34, 0.12);
-    }
-    /* state: danger — red */
-    .tl-step.danger .tl-icon {
-      background: #c0392b;
-      border-color: #c0392b;
-      box-shadow: 0 0 0 5px rgba(192, 57, 43, 0.12);
-    }
-    /* state: info — light blue */
-    .tl-step.info .tl-icon {
-      background: #5dade2;
-      border-color: #5dade2;
-      box-shadow: 0 0 0 5px rgba(93, 173, 226, 0.14);
-    }
-    /* state: idle */
-    .tl-step.idle .tl-icon {
-      background: #f3f4f8;
-      border-color: #dde1ea;
-    }
-
-    /* ── Step label ── */
+    /* ── Node label ── */
     .tl-label {
-      margin-top: 10px;
-      font-size: 11px;
-      font-weight: 600;
-      color: #9aa0b8;
-      text-align: center;
-      line-height: 1.35;
-      max-width: 85px;
+      margin-top: 8px; font-size: 10px; font-weight: 600;
+      color: #9aa0b8; text-align: center; line-height: 1.3; max-width: 74px;
     }
-    .tl-step.done .tl-label   { color: #1e2340; }
-    .tl-step.active .tl-label { color: #1e2340; }
-    .tl-step.warn .tl-label   { color: #1e2340; }
-    .tl-step.danger .tl-label { color: #1e2340; }
-    .tl-step.info .tl-label   { color: #1e2340; }
+    .tl-node.done .tl-label, .tl-node.active .tl-label,
+    .tl-node.warn .tl-label, .tl-node.danger .tl-label,
+    .tl-node.info .tl-label, .tl-node.idle .tl-label { color: #1e2340; }
 
-    /* ── Status code badges ── */
-    .tl-badges {
-      margin-top: 6px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 3px;
+    /* ── Badges ── */
+    .tl-badges { margin-top: 4px; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
+    .badge { font-size: 8px; font-weight: 600; padding: 1px 4px; border-radius: 3px; background: #f0f2f7; color: #8a90a8; border: 0.5px solid #dde1ea; }
+    .tl-node.done   .badge { background: #eaf7f0; color: #1a7a45; border-color: #a3d9bc; }
+    .tl-node.active .badge { background: #e8f3fb; color: #1a5f8a; border-color: #90c3e8; }
+    .tl-node.warn   .badge { background: #fdf3e8; color: #8a4a10; border-color: #f0c08a; }
+    .tl-node.danger .badge { background: #fdecea; color: #7b1c13; border-color: #f0a09e; }
+    .tl-node.info   .badge { background: #eaf4fb; color: #1a5f8a; border-color: #aed6f1; }
+    .tl-node.idle   .badge { background: #eaecf2; color: #5a6278; border-color: #c5cad8; }
+
+    /* ── Count ── */
+    .tl-count { font-size: 17px; font-weight: 600; color: #c0c5d8; margin-top: 6px; font-variant-numeric: tabular-nums; line-height: 1; }
+    .tl-node.done   .tl-count { color: #27ae60; }
+    .tl-node.active .tl-count { color: #2980b9; }
+    .tl-node.warn   .tl-count { color: #e67e22; }
+    .tl-node.danger .tl-count { color: #c0392b; }
+    .tl-node.info   .tl-count { color: #5dade2; }
+    .tl-node.idle   .tl-count { color: #7b829a; }
+
+    /* ════════════════════════════════════
+       VERTICAL LINES – REPLACED ARROWS
+    ════════════════════════════════════ */
+
+    /* DOWN line: from top-row sub into main (points toward main) */
+    .line-down {
+      display: flex; flex-direction: column; align-items: center;
     }
-    .badge {
-      font-size: 9px;
-      font-weight: 600;
-      padding: 2px 5px;
-      border-radius: 4px;
-      background: #f0f2f7;
-      color: #8a90a8;
-      border: 0.5px solid #dde1ea;
-      letter-spacing: 0.2px;
-    }
-    .tl-step.done .badge {
-      background: #eaf7f0;
-      color: #1a7a45;
-      border-color: #a3d9bc;
-    }
-    .tl-step.active .badge {
-      background: #e8f3fb;
-      color: #1a5f8a;
-      border-color: #90c3e8;
-    }
-    .tl-step.warn .badge {
-      background: #fdf3e8;
-      color: #8a4a10;
-      border-color: #f0c08a;
-    }
-    .tl-step.danger .badge {
-      background: #fdecea;
-      color: #7b1c13;
-      border-color: #f0a09e;
-    }
-    .tl-step.info .badge {
-      background: #eaf4fb;
-      color: #1a5f8a;
-      border-color: #aed6f1;
+    .line-down .vl { width: 2px; height: 18px; background: #8f98b0; }  /* simple line, no arrowhead */
+
+    /* For bottom row we use .line-down (direction from main to sub) */
+
+    /* ════════════════════════════════════
+       SUB-STEP CARDS (original styling)
+    ════════════════════════════════════ */
+
+    .tl-sub {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center;
+      width: 100%; padding: 6px 4px; margin-bottom: 0;
     }
 
-    /* ── Count below badge ── */
-    .tl-count {
-      font-size: 20px;
-      font-weight: 600;
-      color: #c0c5d8;
-      margin-top: 8px;
-      font-variant-numeric: tabular-nums;
-      line-height: 1;
+    .tl-sub-icon {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 1.5px solid #dde1ea; background: #f7f8fb;
+      position: relative; z-index: 1; font-size: 11px;
     }
-    .tl-step.done .tl-count   { color: #27ae60; }
-    .tl-step.active .tl-count { color: #2980b9; }
-    .tl-step.warn .tl-count   { color: #e67e22; }
-    .tl-step.danger .tl-count { color: #c0392b; }
-    .tl-step.info .tl-count   { color: #5dade2; }
+    .tl-sub.s-info   .tl-sub-icon { background: #eaf4fb; border-color: #aed6f1; color: #1a5f8a; }
+    .tl-sub.s-warn   .tl-sub-icon { background: #fdf3e8; border-color: #f0c08a; color: #8a4a10; }
+    .tl-sub.s-action .tl-sub-icon { background: #f3effe; border-color: #c4b5f8; color: #7c5cbf; }
+    .tl-sub.s-done   .tl-sub-icon { background: #eaf7f0; border-color: #a3d9bc; color: #1a7a45; }
+    .tl-sub.s-idle   .tl-sub-icon { background: #f3f4f8; border-color: #dde1ea; color: #7b829a; }
 
-    /* ── Legend row ── */
+    .tl-sub-label {
+      margin-top: 4px; font-size: 9px; font-weight: 600;
+      color: #9aa0b8; text-align: center; line-height: 1.25; max-width: 74px;
+    }
+    .tl-sub.s-info   .tl-sub-label { color: #1a5f8a; }
+    .tl-sub.s-warn   .tl-sub-label { color: #8a4a10; }
+    .tl-sub.s-action .tl-sub-label { color: #5b3fa8; }
+    .tl-sub.s-done   .tl-sub-label { color: #1a7a45; }
+
+    .tl-sub-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; margin-top: 3px; }
+    .tl-sub-count { font-size: 13px; font-weight: 600; color: #c0c5d8; margin-top: 3px; font-variant-numeric: tabular-nums; }
+    .tl-sub.s-info   .tl-sub-count { color: #5dade2; }
+    .tl-sub.s-warn   .tl-sub-count { color: #e67e22; }
+    .tl-sub.s-action .tl-sub-count { color: #7c5cbf; }
+    .tl-sub.s-done   .tl-sub-count { color: #27ae60; }
+
+    /* sub group label */
+    .tl-sub-group {
+      font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+      color: #7c5cbf; background: #f0ebfd; border: 0.5px solid #c4b5f8;
+      border-radius: 3px; padding: 1px 5px; margin-bottom: 4px; margin-top: 6px; align-self: center;
+    }
+
+    /* ── stacked subs inside a cell (top or bottom) ── */
+    .tl-sub-stack {
+      display: flex; flex-direction: column; align-items: center; width: 100%;
+    }
+
+    /* vertical connector line between stacked subs */
+    .sub-connector {
+      width: 2px; height: 10px; background: #8f98b0;
+    }
+
+    /* ── new style for inline sub steps: vertical stack, no horizontal row ── */
+    .vertical-sub-group {
+      display: flex; flex-direction: column; align-items: center; width: 100%;
+    }
+
+    /* ══ LEGEND ══ */
     .tl-legend {
-      display: flex;
-      justify-content: center;
-      gap: 24px;
-      margin-top: 22px;
-      padding-top: 16px;
-      border-top: 1px solid #eaecf2;
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 20px; margin-top: 20px; padding-top: 14px; border-top: 1px solid #eaecf2;
     }
-    .leg {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      color: #7b829a;
-      font-weight: 500;
-    }
-    .leg-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-  .double-zonage { border: 2px dashed red; background-color: rgba(255, 0, 0, 0.1) !important; }
-  footer { margin-top: 450px; }
+    .leg { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #7b829a; font-weight: 500; }
+    .leg-dot { width: 7px; height: 7px; border-radius: 50%; }
+  footer { margin-top: 1100px; }
 `);
 
 // ─── HTML Template ────────────────────────────────────────────────────────────
@@ -463,143 +469,281 @@ let a4 = `
       <div class="gud_item"><span class="date d-none">Date d'impression: <span id="date_of_print"></span></span></div>
     </div>
 
- 
+
+
      <!-- countdown -->
-   <div class="countdown-container">
-    <div class="timeline-section">
+<div class="countdown-container">
+  <div class="timeline-section">
+  
+    <div class="timeline-title">Progression des camions</div>
 
-      <div class="timeline-title">Progression des camions</div>
+    <div class="tl-rows">
 
+      <!-- ════════ TOP ROW — action-requise subs ════════ -->
+      <div class="tl-top">
+
+        <!-- COMMANDÉ: no top sub -->
+        <div class="tl-cell"></div>
+
+        <!-- NON ZONÉ top: SM planifiée sans zone -->
+        <div class="tl-cell">
+          <div class="tl-sub-stack">
+            <div class="tl-sub-group">Action requise</div>
+            <div class="tl-sub s-action">
+              <div class="tl-sub-icon"><i class="fas fa-exclamation-triangle"></i></div>
+              <div class="tl-sub-label">SM avec palettes non zonées</div>
+              <div class="tl-sub-badges"><span class="badge" style="background:#f0ebfd;color:#5b3fa8;border-color:#c4b5f8">10</span></div>
+              <div class="tl-sub-count" id="tl-plannozone">—</div>
+            </div>
+            <!-- ↓ line pointing down into main node -->
+            <div class="line-down"><div class="vl"></div></div>
+          </div>
+        </div>
+
+        <!-- AFFECTÉ top: Camions débord -->
+        <div class="tl-cell">
+          <div class="tl-sub-stack">
+            <div class="tl-sub-group">Action requise</div>
+            <div class="tl-sub s-action">
+              <div class="tl-sub-icon"><i class="fas fa-boxes"></i></div>
+              <div class="tl-sub-label">Camion débord</div>
+              <div class="tl-sub-badges">
+                <span class="badge" style="background:#f0ebfd;color:#5b3fa8;border-color:#c4b5f8">&gt;11</span>
+                <span class="badge" style="background:#f0ebfd;color:#5b3fa8;border-color:#c4b5f8">&lt;80</span>
+              </div>
+              <div class="tl-sub-count" id="tl-debord">—</div>
+            </div>
+            <div class="line-down"><div class="vl"></div></div>
+          </div>
+        </div>
+
+        <!-- CAMION À LA PORTE: no top sub -->
+        <div class="tl-cell">
+        <div class="tl-sub-stack">
+            
+            <div class="tl-sub s-warn">
+              <div class="tl-sub-icon"><i class="fas fa-spinner"></i></div>
+              <div class="tl-sub-label">Pré-chargement en cours</div>
+              <div class="tl-sub-badges">
+              <span class="badge" style="background:#fdf3e8;color:#8a4a10;border-color:#f0c08a">75</span>
+              </div>
+              <div class="tl-sub-count" id="tl-preload">-</div>
+            </div>
+            <div class="line-down"><div class="vl"></div></div>
+          </div>
+        </div>
+
+        <!-- CHARGEMENT EN COURS: no top sub -->
+        <div class="tl-cell"></div>
+
+        <!-- LIVRAISON TERMINÉE: no top sub -->
+        <div class="tl-cell"></div>
+
+      </div>
+      <!-- /tl-top -->
+
+      <!-- ════════ MAIN TRACK ════════ -->
       <div class="tl-track">
 
-        <!-- STEP 1 — Non zoné · statut 10 · RED -->
-        <div class="tl-step danger">
-          <div class="tl-icon">
-            <svg viewBox="0 0 16 16" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="8" cy="8" r="6.2"/>
-              <line x1="8" y1="4.8" x2="8" y2="8.8"/>
-              <circle cx="8" cy="11" r="0.8" fill="#ffffff" stroke="none"/>
-            </svg>
-          </div>
+        <!-- COMMANDÉ -->
+        <div class="tl-node idle">
+          <div class="tl-icon"><i class="fas fa-clipboard-list"></i></div>
+          <div class="tl-label">Commandé</div>
+          <div class="tl-badges"><span class="badge">10</span></div>
+          <div class="tl-count" id="tl-commandes">—</div>
+        </div>
+
+        <!-- NON ZONÉ -->
+        <div class="tl-node danger">
+          <div class="tl-icon"><i class="fas fa-exclamation-circle"></i></div>
           <div class="tl-label">Non zoné</div>
           <div class="tl-badges"><span class="badge">10</span></div>
-          <div class="tl-count" id="tl-nozone">-</div>
+          <div class="tl-count" id="tl-nozone">—</div>
         </div>
 
-        <!-- STEP 1b — Grand lot à venir · statut 10 · LIGHT BLUE -->
-        <div class="tl-step info">
-          <div class="tl-icon">
-             <svg viewBox="0 0 16 16" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M8 2v4l2.5 2.5"/>
-              <circle cx="8" cy="8" r="6"/>
-            </svg>
-          </div>
-          <div class="tl-label">Grand lot à venir</div>
-          <div class="tl-badges"><span class="badge">10</span></div>
-          <div class="tl-count" id="tl-grandlot">-</div>
-        </div>
-
-        <!-- STEP 2 — Zoné · statuts 11, 50, 70, 71, 72 · BLUE -->
-        <div class="tl-step active">
-          <div class="tl-icon">
-            <svg viewBox="0 0 16 16" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 2h5.5l6 6a1.5 1.5 0 0 1 0 2.1l-3.4 3.4a1.5 1.5 0 0 1-2.1 0L2 7.5V2z"/>
-              <circle cx="5.5" cy="5.5" r="1" fill="#ffffff" stroke="none"/>
-            </svg>
-          </div>
-          <div class="tl-label">Zoné</div>
+        <!-- AFFECTÉ À UNE ZONE -->
+        <div class="tl-node active">
+          <div class="tl-icon"><i class="fas fa-map-marker-alt"></i></div>
+          <div class="tl-label">Affecté à une zone</div>
           <div class="tl-badges">
-            <span class="badge">11</span>
-            <span class="badge">50</span>
-            <span class="badge">70</span>
-            <span class="badge">71</span>
-            <span class="badge">72</span>
+            <span class="badge">11</span><span class="badge">50</span>
+            <span class="badge">70</span><span class="badge">71</span><span class="badge">72</span><span class="badge">75</span>
           </div>
-          <div class="tl-count" id="tl-zoned">-</div>
+          <div class="tl-count" id="tl-zoned">—</div>
         </div>
 
-        <!-- STEP 3 — À la porte · statut 75 · BLUE -->
-        <div class="tl-step active">
-          <div class="tl-icon">
-            <svg viewBox="0 0 16 16" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="1.5" width="10" height="13" rx="1"/>
-              <line x1="3" y1="14.5" x2="13" y2="14.5"/>
-              <circle cx="10.5" cy="8" r="0.8" fill="#ffffff" stroke="none"/>
-            </svg>
-          </div>
-          <div class="tl-label">À la porte</div>
+        <!-- CAMION À LA PORTE -->
+        <div class="tl-node active">
+          <div class="tl-icon"><i class="fas fa-door-open"></i></div>
+          <div class="tl-label">Camion à la porte</div>
           <div class="tl-badges"><span class="badge">75</span></div>
-          <div class="tl-count" id="tl-door">-</div>
+          <div class="tl-count" id="tl-door">—</div>
         </div>
 
-        <!-- STEP 3b — Pré-chargement en cours · statut 75 · ORANGE -->
-        <div class="tl-step warn">
-          <div class="tl-icon">
-            <svg viewBox="0 0 16 16" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M8 2v4l2.5 2.5"/>
-              <circle cx="8" cy="8" r="6"/>
-            </svg>
-          </div>
-          <div class="tl-label">Pré-chargement en cours</div>
-          <div class="tl-badges"><span class="badge">75</span></div>
-          <div class="tl-count" id="tl-preload">-</div>
+        <!-- CHARGEMENT EN COURS -->
+        <div class="tl-node warn">
+          <div class="tl-icon"><i class="fas fa-truck"></i></div>
+          <div class="tl-label">Chargement en cours</div>
+          <div class="tl-badges"><span class="badge">80</span></div>
+          <div class="tl-count" id="tl-loading">—</div>
         </div>
 
-        <!-- STEP 4 — En cours de chargement · statuts 80, 81 · ORANGE -->
-        <div class="tl-step warn">
-          <div class="tl-icon">
-            <svg viewBox="0 0 16 16" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="1" y="4" width="9" height="7" rx="1"/>
-              <path d="M10 6.5h2.5l2 2.5V11H10V6.5z"/>
-              <circle cx="3.5" cy="12.5" r="1.2"/>
-              <circle cx="12" cy="12.5" r="1.2"/>
-            </svg>
-          </div>
-          <div class="tl-label">En cours de chargement</div>
-          <div class="tl-badges">
-            <span class="badge">80</span>
-            <span class="badge">81</span>
-          </div>
-          <div class="tl-count" id="tl-loading">-</div>
-        </div>
-
-        <!-- STEP 5 — Terminé · statuts 89, 90 · GREEN -->
-        <div class="tl-step done">
-          <div class="tl-icon">
-            <svg viewBox="0 0 16 16" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2.5 8.5l3.5 3.5 7-7"/>
-            </svg>
-          </div>
+        <!-- LIVRAISON TERMINÉE -->
+        <div class="tl-node done">
+          <div class="tl-icon"><i class="fas fa-flag-checkered"></i></div>
           <div class="tl-label">Terminé</div>
-          <div class="tl-badges">
-            <span class="badge">89</span>
-            <span class="badge">90</span>
-          </div>
-          <div class="tl-count" id="tl-done">-</div>
+          <div class="tl-badges"><span class="badge">89</span><span class="badge">90</span></div>
+          <div class="tl-count" id="tl-done">—</div>
         </div>
 
       </div>
       <!-- /tl-track -->
 
-      <!-- Legend -->
-      <div class="tl-legend">
-        <div class="leg"><div class="leg-dot" style="background:#c0392b;"></div>Non zoné</div>
-        <div class="leg"><div class="leg-dot" style="background:#5dade2;"></div>Grand lot</div>
-        <div class="leg"><div class="leg-dot" style="background:#2980b9;"></div>En cours</div>
-        <div class="leg"><div class="leg-dot" style="background:#e67e22;"></div>Chargement</div>
-        <div class="leg"><div class="leg-dot" style="background:#27ae60;"></div>Terminé</div>
-        <div class="leg"><div class="leg-dot" style="background:#c0c5d8;"></div>Aucune donnée</div>
+      <!-- ════════ BOTTOM ROW — info subs ════════ -->
+      <div class="tl-bottom">
+
+        <!-- COMMANDÉ: no bottom sub -->
+        <div class="tl-cell"></div>
+
+        <!-- NON ZONÉ bottom: Grand lot à venir -->
+        <div class="tl-cell">
+          <div class="tl-sub-stack">
+            <div class="line-down"><div class="vl"></div></div>
+            <div class="tl-sub s-info">
+              <div class="tl-sub-icon"><i class="fas fa-boxes"></i></div>
+              <div class="tl-sub-label">Grand lot à venir</div>
+              <div class="tl-sub-badges"><span class="badge" style="background:#eaf4fb;color:#1a5f8a;border-color:#aed6f1">10</span></div>
+              <div class="tl-sub-count" id="tl-grandlot">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AFFECTÉ bottom: Attend arrivage → parking → En pause (vertical stack) -->
+        <div class="tl-cell">
+          <div class="tl-sub-stack">
+            <!-- line from main -->
+            <div class="line-down"><div class="vl"></div></div>
+
+            <!-- SM complète -->
+            <div class="tl-sub s-info">
+              <div class="tl-sub-icon"><i class="fas fa-check-circle"></i></div>
+              <div class="tl-sub-label">SM complète</div>
+              <div class="tl-sub-badges">
+              <span class="badge" style="background:#eaf4fb;color:#1a5f8a;border-color:#aed6f1">50</span>
+              </div>
+              <div class="tl-sub-count" id="tl-complete">—</div>
+            </div>   
+            
+            <!-- En attente -->
+            <div class="tl-sub s-info">
+              <div class="tl-sub-icon"><i class="fas fa-clock"></i></div>
+              <div class="tl-sub-label">En attente transporteur</div>
+              <div class="tl-sub-badges">
+              <span class="badge" style="background:#eaf4fb;color:#1a5f8a;border-color:#aed6f1">11</span>
+              <span class="badge" style="background:#eaf4fb;color:#1a5f8a;border-color:#aed6f1">50</span>
+              </div>
+              <div class="tl-sub-count" id="tl-attente">—</div>
+            </div>
+            
+            <!-- connector -->
+            <div class="sub-connector"></div>
+            
+            <!-- En attente parking (première sous-étape) -->
+            <div class="tl-sub s-info">
+              <div class="tl-sub-icon"><i class="fas fa-parking"></i></div>
+              <div class="tl-sub-label">Arrivé sur le parking</div>
+              <div class="tl-sub-badges">
+                <span class="badge" style="background:#eaf4fb;color:#1a5f8a;border-color:#aed6f1">70</span>
+                <span class="badge" style="background:#eaf4fb;color:#1a5f8a;border-color:#aed6f1">71</span>
+                <span class="badge" style="background:#eaf4fb;color:#1a5f8a;border-color:#aed6f1">72</span>
+              </div>
+              <div class="tl-sub-count" id="tl-parking">—</div>
+            </div>
+            
+            <!-- connector -->
+            <div class="sub-connector"></div>
+            
+            <!-- En pause (maintenant sous parking comme étape normale) -->
+            <div class="tl-sub s-idle">
+              <div class="tl-sub-icon"><i class="fas fa-pause-circle"></i></div>
+              <div class="tl-sub-label">En pause</div>
+              <div class="tl-sub-badges">
+              <span class="badge">70</span>
+              <span class="badge">71</span>
+              <span class="badge">72</span>
+              </div>
+              <div class="tl-sub-count" id="tl-pause">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CAMION À LA PORTE bottom: en pause -->
+        <div class="tl-cell">
+          <div class="tl-sub-stack">
+            <div class="line-down"><div class="vl"></div></div>
+            <div class="tl-sub s-idle">
+              <div class="tl-sub-icon"><i class="fas fa-pause-circle"></i></div>
+              <div class="tl-sub-label">En pause</div>
+             <div class="tl-sub-badges">
+              <span class="badge">75</span>
+              </div>
+              <div class="tl-sub-count" id="tl-pause-porte">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHARGEMENT EN COURS bottom: Prêt pour départ -->
+        <div class="tl-cell">
+          <div class="tl-sub-stack">
+            <div class="line-down"><div class="vl"></div></div>
+            <div class="tl-sub s-done">
+              <div class="tl-sub-icon"><i class="fas fa-check-circle"></i></div>
+              <div class="tl-sub-label">Prêt pour départ</div>
+              <div class="tl-sub-badges"><span class="badge" style="background:#eaf7f0;color:#1a7a45;border-color:#a3d9bc">81</span></div>
+              <div class="tl-sub-count" id="tl-pret">—</div>
+            </div>
+          </div>
+          <div class="tl-sub-stack">
+            <div class="line-down"><div class="vl"></div></div>
+            <div class="tl-sub s-idle">
+              <div class="tl-sub-icon"><i class="fas fa-pause-circle"></i></div>
+              <div class="tl-sub-label">En pause</div>
+             <div class="tl-sub-badges">
+              <span class="badge">81</span>
+              </div>
+              <div class="tl-sub-count" id="tl-pause-pret">—</div>
+            </div>
+          </div>         
+        </div>
+
+        <!-- LIVRAISON TERMINÉE: no bottom sub -->
+        <div class="tl-cell"></div>
+
       </div>
+      <!-- /tl-bottom -->
 
     </div>
+    <!-- /tl-rows -->
+
+    <!-- Legend -->
+    <div class="tl-legend">
+      <div class="leg"><div class="leg-dot" style="background:#c0c5d8"></div>Commandé / En pause</div>
+      <div class="leg"><div class="leg-dot" style="background:#c0392b"></div>Non zoné</div>
+      <div class="leg"><div class="leg-dot" style="background:#7c5cbf"></div>Action requise</div>
+      <div class="leg"><div class="leg-dot" style="background:#5dade2"></div>Info</div>
+      <div class="leg"><div class="leg-dot" style="background:#2980b9"></div>En cours</div>
+      <div class="leg"><div class="leg-dot" style="background:#e67e22"></div>Chargement</div>
+      <div class="leg"><div class="leg-dot" style="background:#27ae60"></div>Terminé</div>
+    </div>
+
   </div>
-    <!-- /timeline-section -->
+</div>
 
   
   <!-- /countdown-container -->
 
     <div class="info mt-3 small text-muted">
-      <p><strong><i class="fal fa-info-circle"></i> Ctrl + clic</strong> sur une zone occupée pour ouvrir le SM correspondant dans une nouvelle fenêtre</strong></p>
+      <p><strong><i class="fal fa-info-circle"></i> alt + clic</strong> sur une zone occupée pour ouvrir le SM correspondant dans une nouvelle fenêtre</strong></p>
       
 
       
@@ -732,6 +876,16 @@ const selected_date = window.location.href.includes("?selectedDate=")
   ? window.location.href.split("?selectedDate=")[1]
   : $("#selectedDate").val();
 
+// ─── function is_en_pause ────────────────────────────────────────────────────────────────────
+
+function is_en_pause(tr) {
+  if (!tr) return false; // avoid errors on null/undefined
+  const text = tr.toLowerCase();
+  const words_to_search = ["en pause", "decroche", "fdc", "decrocher", "dispo","revient"];
+
+  return words_to_search.some(word => text.includes(word));
+}
+
 // ─── Date Helpers ─────────────────────────────────────────────────────────────
 
 /**
@@ -760,110 +914,121 @@ function get_ref_code(ref) {
 }
 
 // ─── Data Parsing ─────────────────────────────────────────────────────────────
-
-/**
- * Parses all zone options from the server HTML and returns an array of zone info objects.
- * Also updates the SMenZT and readyToLoad counters as a side-effect.
- * @param {jQuery} data - Parsed jQuery object of the server response.
- * @returns {{ id: number, name: string, ref: string, status: string, SM_ID: string }[]}
- */
 function parse_zones(data) {
   const zones = [];
-  let tlpreload = 0;
-  let tlgrandlot = 0;
-  let tlnozone=0;
-  let tldoor = 0;
-  let tlzoned = 0;
-  let tlloading =0;
-  let tldone =0;
- 
 
-  $(data.find('#wa-table tbody tr')).each(function(index, element) {
-    let status = parseInt(element.cells[1].textContent.trim())
-    
-    if(element.cells[12].textContent.trim().length > 0 && status !== '90' && status == "10") {
-      tlgrandlot++;
+  // ─── Counters ─────────────────────────────────────────────────────────────
+  const counters = {
+    commandes: 0, preload: 0, grandlot: 0, nozone: 0, plannozone: 0,
+    door: 0, pauseporte: 0, pausepret: 0, zoned: 0, loading: 0,
+    done: 0, parking: 0, debord: 0, attente: 0, pause: 0, pret: 0, complete: 0,
+  };
+
+  const inc = (key) => counters[key]++;
+
+  // ─── Truck loop ───────────────────────────────────────────────────────────
+  data.find('#wa-table tbody tr').each(function (_, el) {
+    const cells   = el.cells;
+    const status  = parseInt(cells[1].textContent.trim());
+    const sm      = parseInt(cells[2].textContent.trim());
+    const enPause = is_en_pause(cells[19].innerHTML);
+
+    inc('commandes');
+
+    if (cells[12].textContent.trim() && status === 10) inc('grandlot');
+    if (sm > 33 && status !== 90 && status !== 89) inc('debord');
+    if (sm > 0  && status === 10) inc('plannozone');
+    if (status === 10) inc('nozone');
+    if ([11, 44, 50, 70, 71, 72, 75].includes(status)) inc('zoned');
+    if (status === 50) inc('complete');
+    if ([11, 50].includes(status)) inc('attente');
+
+    if ([70, 71, 72].includes(status)) {
+      inc('parking');
+      if (enPause) inc('pause');
     }
 
-    switch (status) {
-      case 10:
-        tlnozone++
-        break
-
-      case 11:
-      case 44:
-      case 50:
-      case 70:
-      case 71:
-      case 72:
-        tlzoned++
-        break
-
-      case 75:
-        tldoor++
-        break
-
-      case 80:
-      case 81:
-        tlloading++
-        break 
-        
-      case 89:
-      case 90:
-        tldone++
-          break  
+    if (status === 75) {
+      inc('door');
+      if (enPause) inc('pauseporte');
     }
+
+    if (status === 80) inc('loading');
+
+    if (status === 81) {
+      inc('pret');
+      if (enPause) inc('pausepret');
+    }
+
+    if ([89, 90].includes(status)) inc('done');
   });
-  
-  $('#tl-nozone').text(tlnozone);
-  $('#tl-grandlot').text(tlgrandlot);
-  $('#tl-zoned').text(tlzoned);
-  $('#tl-loading').text(tlloading);
-  $('#tl-done').text(tldone);
-
-  data.find("#ZoneBase>select>option").each(function () {
-    const option = $(this);
-    const zoneID = parseInt(option.val());
+  // ─── Zone loop ────────────────────────────────────────────────────────────
+  data.find("#ZoneBase > select > option").each(function () {
+    const option  = $(this);
+    const zoneID  = parseInt(option.val());
     const zoneName = option.html();
-    const isInZT = option.hasClass("zone-in-verwendung-auslieferungstermin");
 
-    if (isInZT && zoneName.trim().startsWith("ZT")) tlpreload++;
+    if (option.hasClass("zone-in-verwendung-auslieferungstermin")) {
+      // Zone in use today
+      if (zoneName.trim().startsWith("ZT")) inc('preload');
 
-    if (isInZT) {
-      const cells = data.find(`[data-selected='${zoneID}']`).parent().children();
-      const SM_ID = cells.eq(0).text().trim();
-      let ref = get_ref_code(cells.eq(6).text().trim());
+      const cells   = data.find(`[data-selected='${zoneID}']`).parent().children();
+      const SM_ID   = cells.eq(0).text().trim();
+      let   ref     = get_ref_code(cells.eq(6).text().trim());
 
       if (ref === 'GCA?_TEN?') {
         ref = cells.eq(8).text().trim().substring(11, 15);
       }
 
       const lpStatus = parseInt(cells.eq(1).text());
-      let status = STATUS.TAKEN;
-      if (EN_COURS_CODES.has(lpStatus)) status = STATUS.EN_COURS;
-      else if (lpStatus === 44)         status = STATUS.BLOCKED;
+      let   zStatus  = STATUS.TAKEN;
+      if (EN_COURS_CODES.has(lpStatus))  zStatus = STATUS.EN_COURS;
+      else if (lpStatus === 44)          zStatus = STATUS.BLOCKED;
 
-      zones.push({ id: zoneID, name: zoneName, ref, status, SM_ID });
+      zones.push({ id: zoneID, name: zoneName, ref, status: zStatus, SM_ID });
 
     } else if (option.hasClass("zone-in-verwendung-vergangenheit")) {
-      zones.push({ id: zoneID, name: zoneName, ref: '', status: STATUS.DE_HIER, SM_ID: '' });
+      // Zone used yesterday
+      zones.push({ id: zoneID, name: zoneName, ref: '', status: STATUS.DE_HIER,   SM_ID: '' });
 
     } else if (option.hasClass("zone-in-verwendung-zukunft")) {
+      // Zone scheduled ahead
       zones.push({ id: zoneID, name: zoneName, ref: '', status: STATUS.DE_AVANCE, SM_ID: '' });
 
     } else if (option.is(":disabled")) {
-      zones.push({ id: zoneID, name: zoneName, ref: '', status: STATUS.BLOCKED, SM_ID: '' });
+      zones.push({ id: zoneID, name: zoneName, ref: '', status: STATUS.BLOCKED,   SM_ID: '' });
 
     } else {
-      zones.push({ id: zoneID, name: zoneName, ref: '', status: STATUS.FREE, SM_ID: '' });
+      zones.push({ id: zoneID, name: zoneName, ref: '', status: STATUS.FREE,      SM_ID: '' });
     }
   });
 
-  $('#tl-preload').text(tlpreload);
-  $('#tl-door').text(tldoor - tlpreload);
+  // ─── DOM update ───────────────────────────────────────────────────────────
+  const domUpdates = {
+    'tl-commandes':  'commandes',
+    'tl-nozone':     'nozone',
+    'tl-grandlot':   'grandlot',
+    'tl-zoned':      'zoned',
+    'tl-complete':   'complete',
+    'tl-loading':    'loading',
+    'tl-done':       'done',
+    'tl-debord':     'debord',
+    'tl-plannozone': 'plannozone',
+    'tl-parking':    'parking',
+    'tl-attente':    'attente',
+    'tl-pause':      'pause',
+    'tl-pret':       'pret',
+    'tl-pause-porte':'pauseporte',
+    'tl-pause-pret': 'pausepret',
+    'tl-door':       'door',
+    'tl-preload':    'preload',
+  };
+
+  Object.entries(domUpdates).forEach(([id, key]) => $(`#${id}`).text(counters[key]));
 
   return zones;
 }
+ 
 
 // ─── Map Rendering ────────────────────────────────────────────────────────────
 
@@ -883,15 +1048,11 @@ function update_map() {
     $(`#total_${s}`).html(`(${$(`.${s}`).not('.color').length})`);
   });
 
-  // Blocked zone percentage
-  const blockedCount = $(`.${STATUS.BLOCKED}`).not('.color').length;
-  const blockedPct = (blockedCount / TOTAL_ZONES * 100).toFixed(2);
-  $('#ZonesBloquees').html(`${blockedPct}%`);
-  $('#ZonesBloquees').toggleClass('text-danger', blockedCount / TOTAL_ZONES * 100 > 15);
 
   // Ctrl+click opens SM URL
   $(document).on('click', 'a[zone]', function (e) {
-    if (e.ctrlKey) {
+    
+    if (e.altKey) {
       e.preventDefault();
       window.open($(this).attr('SM_href'), '_blank');
     }
@@ -931,7 +1092,7 @@ function load_other_day(dayOffset) {
       let ref = get_ref_code(cells.eq(6).text().trim());
       if (ref === 'GCA?_TEN?') ref = cells.eq(8).text().trim().substring(11, 15);
 
-      $('#' + option.html()).append(ref);
+      $('#' + option.html()).html(ref);
     });
   });
 }
@@ -1003,4 +1164,9 @@ $(document).ready(function () {
   $.get(`/Warenausgang/Tag?sort=StatusASC&selectedDate=${selected_date}`, function (data) {
     update_zone_status(data);
   });
+
+  // reload the page after 60 secends
+  setTimeout(function(){
+    window.location.reload()
+  },60000)
 });
