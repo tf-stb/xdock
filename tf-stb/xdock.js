@@ -1,9 +1,9 @@
 //***************************//
 // XDock PRO - STEF Strasburg
-// Dernière mise à jour le 27/12/2025
+// Dernière mise à jour le 16/03/2026
 // Copyright  ABBAS Hassan
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.14_27/12/2025- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.15_16/03/2026- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -1076,126 +1076,182 @@ if (isSMTour) {
 //--------------------------------
 // Changer les données du transporteur
 //--------------------------------
-function changer_transporteur(){
-
-  let la_destination_princpal = $("#zielort").val()
+function changer_transporteur() {
+  let la_destination_princpal = $("#zielort").val();
   let tout_les_camions = [];
 
-  $.get("/Warenausgang/Tag?sort=ZielortLokationNameASC&selectedDate=" + $("#selectedDate").val()+"&search="+la_destination_princpal, function (data, textStatus, jqXHR) {
+  $.get("/Warenausgang/Tag?sort=ZielortLokationNameASC&selectedDate=" + $("#selectedDate").val() + "&search=" + la_destination_princpal, function (data) {
     $(data)
       .find("#table-container tbody>tr")
       .each(function (key, value) {
         let destination = value.cells[6];
-
-        if(destination.innerText.trim() == la_destination_princpal){
-        tout_les_camions.push({ sm: value.cells[0].innerHTML,status:value.cells[1].innerHTML, transitaire: value.cells[9].innerText.trim() });
-
+        if (destination.innerText.trim() == la_destination_princpal) {
+          tout_les_camions.push({
+            sm: value.cells[0].innerHTML,
+            status: value.cells[1].innerHTML,
+            transitaire: value.cells[9].innerText.trim()
+          });
         }
       });
 
-    // check now
     let html = `<table class="table">
-    <thead>
-      <tr>
-        <th scope="col">Séle...</th>
-        <th scope="col">Statut</th>
-        <th scope="col">Tournée SM</th>
-        <th scope="col">Transitaire</th>        
-      </tr>
-    </thead>
-    <tbody>{tbody}</tbody>
-  </table>`;
-  
-    let tbody = "";
+      <thead>
+        <tr>
+          <th scope="col">Séle...</th>
+          <th scope="col">Statut</th>
+          <th scope="col">Tournée SM</th>
+          <th scope="col">Transitaire</th>
+        </tr>
+      </thead>
+      <tbody>{tbody}</tbody>
+    </table>`;
 
-    $.map(tout_les_camions, function (Value, index) {
+    let tbody = "";
+    $.map(tout_les_camions, function (Value) {
+      const tourId = $(Value.sm)[2].innerText.trim();
       tbody += `<tr>
-       <th scope="row"><button onclick="save_changes_transporteur(${$(Value.sm)[2].innerText.trim()})" class="btn btn-outline-primary" data-dismiss="modal"><span class="fas fa-exchange"></span></button></th>
-          <td> ${Value.status}</td>
-       <td> ${Value.sm}</td>
-       <td>${Value.transitaire}</td>
-     </tr>`;
-  
-     
+        <th scope="row">
+          <button onclick="save_changes_transporteur('${tourId}')" class="btn btn-outline-primary" data-dismiss="modal">
+            <span class="fas fa-exchange"></span>
+          </button>
+        </th>
+        <td>${Value.status}</td>
+        <td>${Value.sm}</td>
+        <td>${Value.transitaire}</td>
+      </tr>`;
     });
-  
+
     let newHTML = html.replace("{tbody}", tbody);
-  
-    // setup the model
     let barcode_modal = $("#barcode_modal");
     barcode_modal.find(".modal-dialog").addClass("modal-dialog-scrollable");
     barcode_modal.find(".modal-title").html("Choisissez une tournée avec lequel changer");
     barcode_modal.find(".modal-body").html(newHTML);
-  
     let barcodeModal = new bootstrap.Modal(document.getElementById("barcode_modal"), {});
-    barcodeModal.show(); // you can try comment this code, because bootstrap maybe open modal
-
+    barcodeModal.show();
   });
 }
+function save_changes_transporteur(selectedTourId) {
 
+  const currentTourId = new URLSearchParams(window.location.search).get('waTourId');
+  const tourA_url = `https://tf-stb-kl.xdock.de/Warenausgang/Tour?sort=StatusASC&waTourId=${currentTourId}`;
+  const tourB_url = `https://tf-stb-kl.xdock.de/Warenausgang/Tour?sort=StatusASC&waTourId=${selectedTourId}`;
 
-function save_changes_transporteur(smID) {
-  // Send request to get new data
-  $.get("/Warenausgang/Tour?sort=StatusASC&waTourId=" + smID, function (data_dom, textStatus, jqXHR) {
-      let data = $(data_dom);
+  // Helper: serialize ALL elements linked to a form by id (including form="postform" outside the tag)
+  function serializeFormById($doc, formId) {
+    return $doc.find(`[form="${formId}"], #${formId} input[name], #${formId} select[name], #${formId} textarea[name]`)
+      .filter(function () {
+        const el = $(this);
+        if (el.is(':disabled')) return false;
+        if (el.is(':checkbox,:radio')) return el.is(':checked');
+        return true;
+      })
+      .map(function () {
+        return encodeURIComponent(this.name) + '=' + encodeURIComponent($(this).val());
+      })
+      .get()
+      .join('&');
+  }
 
-      // Extract new values
-      let new_transporteur = data.find("select#spediteurId").val();
-      let new_Sous_traitant = data.find("#subunternehmer").val();
-      let new_tracteur = data.find("#kennzeichenZugmaschine").val();
-      let new_remorque = data.find("#kennzeichenAuflieger").val();
-      let new_tel = data.find("#tel").val();
-      let new_numero_de_reappro = data.find("#disponummer").val();
-      let new_numero_de_periode = data.find("#zeitfensternummer").val();
+  console.log(`🔄 Swap Tour A (${currentTourId}) ↔ Tour B (${selectedTourId})`);
 
+  // Step 1: Collect Tour A's transporter data from current DOM
+  const tourA_data = {
+    transporteur:      $("select#spediteurId").val(),
+    sous_traitant:     $("#subunternehmer").val(),
+    tracteur:          $("#kennzeichenZugmaschine").val(),
+    remorque:          $("#kennzeichenAuflieger").val(),
+    tel:               $("#tel").val(),
+    numero_de_reappro: $("#disponummer").val(),
+    numero_de_periode: $("#zeitfensternummer").val()
+  };
 
-      // Prepare data to be sent
-      let transportData = {
-          transporteur: $("select#spediteurId").val(),
-          sous_traitant: $("#subunternehmer").val(),
-          tracteur: $("#kennzeichenZugmaschine").val(),
-          remorque: $("#kennzeichenAuflieger").val(),
-          tel: $("#tel").val(),
-          numero_de_reappro: $("#disponummer").val(),
-          numero_de_periode: $("#zeitfensternummer").val()
-      };
+  console.log('Tour A data:', tourA_data);
 
-      // Save data to localStorage
-      localStorage.setItem('transportData', JSON.stringify(transportData));
+  // Step 2: Fetch Tour B to extract its transporter data
+  $.get(tourB_url, function (rawData) {
+    const $tourB = $(rawData);
 
-      // Open new window
-      window.open("/Warenausgang/Tour?sort=StatusASC&waTourId=" + smID + "&changer_transporteur", "newWindow", "width=800,height=600");
+    const tourB_data = {
+      transporteur:      $tourB.find("select#spediteurId").val(),
+      sous_traitant:     $tourB.find("#subunternehmer").val(),
+      tracteur:          $tourB.find("#kennzeichenZugmaschine").val(),
+      remorque:          $tourB.find("#kennzeichenAuflieger").val(),
+      tel:               $tourB.find("#tel").val(),
+      numero_de_reappro: $tourB.find("#disponummer").val(),
+      numero_de_periode: $tourB.find("#zeitfensternummer").val()
+    };
 
-      // Update current camion
-      $("select#spediteurId").val(new_transporteur);
-      $("#subunternehmer").val(new_Sous_traitant);
-      $("#kennzeichenZugmaschine").val(new_tracteur);
-      $("#kennzeichenAuflieger").val(new_remorque);
-      $("#tel").val(new_tel);
-      $("#disponummer").val(new_numero_de_reappro);
-      $("#zeitfensternummer").val(new_numero_de_periode)
-     
+    console.log('Tour B data:', tourB_data);
+
+    // Step 3: Fresh GET on Tour B → inject Tour A data → POST to Tour B
+    $.get(tourB_url, function (freshB) {
+      const $freshB = $(freshB);
+
+      // Inject Tour A's transporter data into Tour B's fresh DOM
+      $freshB.find("select#spediteurId").val(tourA_data.transporteur);
+      $freshB.find("#subunternehmer").val(tourA_data.sous_traitant);
+      $freshB.find("#kennzeichenZugmaschine").val(tourA_data.tracteur);
+      $freshB.find("#kennzeichenAuflieger").val(tourA_data.remorque);
+      $freshB.find("#tel").val(tourA_data.tel);
+      $freshB.find("#disponummer").val(tourA_data.numero_de_reappro);
+      $freshB.find("#zeitfensternummer").val(tourA_data.numero_de_periode);
+
+      // Serialize ALL form="postform" fields from Tour B's full DOM
+      const tourB_formData = serializeFormById($freshB, 'postform');
+      const tourB_token    = $freshB.find('#postform input[name="__RequestVerificationToken"]').val();
+
+      console.log('Posting Tour A data → Tour B...');
+      console.log('Token B:', tourB_token);
+      console.log('FormData B preview:', tourB_formData.substring(0, 300));
+
+      $.ajax({
+        url: tourB_url,
+        method: 'POST',
+        data: tourB_formData,
+        contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+        headers: { 'RequestVerificationToken': tourB_token },
+        success: function () {
+          console.log('✅ Tour B updated with Tour A transporter data');
+
+          // Step 4: Inject Tour B data into current page Tour A DOM
+          $("select#spediteurId").val(tourB_data.transporteur);
+          $("select#spediteurId").selectpicker('refresh');
+          $("#subunternehmer").val(tourB_data.sous_traitant);
+          $("#kennzeichenZugmaschine").val(tourB_data.tracteur);
+          $("#kennzeichenAuflieger").val(tourB_data.remorque);
+          $("#tel").val(tourB_data.tel);
+          $("#disponummer").val(tourB_data.numero_de_reappro);
+          $("#zeitfensternummer").val(tourB_data.numero_de_periode);
+
+          // Serialize ALL form="postform" fields from current Tour A DOM
+          const tourA_formData = serializeFormById($(document), 'postform');
+          const tourA_token    = $('#postform input[name="__RequestVerificationToken"]').val();
+
+          console.log('Posting Tour B data → Tour A...');
+          console.log('Token A:', tourA_token);
+
+          $.ajax({
+            url: tourA_url,
+            method: 'POST',
+            data: tourA_formData,
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            headers: { 'RequestVerificationToken': tourA_token },
+            success: function () {
+              console.log('✅ Tour A updated with Tour B transporter data');
+              location.reload();
+            },
+            error: function (xhr) {
+              console.error('❌ Failed to update Tour A:', xhr.status, xhr.responseText);
+            }
+          });
+        },
+        error: function (xhr) {
+          console.error('❌ Failed to update Tour B:', xhr.status, xhr.responseText);
+        }
+      });
+    });
   });
 }
-
-if (window.location.href.includes("changer_transporteur")) {
-
-  if (localStorage.getItem('transportData') !== null) {
-    let transportData = JSON.parse(localStorage.getItem("transportData"))
-    $("select#spediteurId").val(transportData.transporteur);
-    $("#subunternehmer").val(transportData.sous_traitant);
-    $("#kennzeichenZugmaschine").val(transportData.tracteur);
-    $("#kennzeichenAuflieger").val(transportData.remorque);
-    $("#tel").val(transportData.tel);
-    $("#disponummer").val(transportData.numero_de_reappro);
-    $("#zeitfensternummer").val(transportData.numero_de_periode)
-
-} else {
-    toastr.error(`transportData does not exist in localStorage.`);
-}
-
-}
-
 
 
 //--------------------------------
