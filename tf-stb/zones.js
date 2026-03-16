@@ -346,6 +346,10 @@ $("<style>").appendTo("head").html(`
     .leg { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #7b829a; font-weight: 500; }
     .leg-dot { width: 7px; height: 7px; border-radius: 50%; }
   footer { margin-top: 1100px; }
+  .double-zonage {
+  border: 2px dashed red;
+  background-color: rgba(255, 0, 0, 0.1) !important;
+}
 `);
 
 // ─── HTML Template ────────────────────────────────────────────────────────────
