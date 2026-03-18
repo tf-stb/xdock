@@ -1,9 +1,9 @@
 //***************************//
-// XDock PRO - STEF Strasburg
-// Dernière mise à jour le 16/03/2026
+// XDock PRO - tf-stb.com
+// Dernière mise à jour le 18/03/2026
 // Copyright  ABBAS Hassan
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.15_16/03/2026- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.16_18/03/2026- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -1060,6 +1060,9 @@ if (isSMTour) {
             <hr>
             <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">Sortie de marchandises:</div> 
             <button class="dropdown-item" onclick="select_all_positions()"><span class="fal fa-check  mr-10"></span> Sélectionner tout les positions</button>
+            <button class="dropdown-item" onclick="selectPalettesBySSCC()"><span class="fal fa-barcode  mr-10"></span> Sélectionner des palettes par SSCC</button>
+            <hr>
+             <button class="dropdown-item" onclick="deleteSelectedBySSCC()"><span class="fal fa-trash  mr-10"></span> Supprimer des palettes sélectionnées par SSCC</button>
             <hr>   
             <button class="dropdown-item" onclick="changer_transporteur()"><span class="fal fa-exchange	  mr-10"></span> Changer les données du transporteur</button>
             <button class="dropdown-item" onclick="Indiquer_les_palettes()"><span class="fal fa-edit	  mr-10"></span>  Indiquer les palettes</button>
@@ -1133,8 +1136,8 @@ function changer_transporteur() {
 function save_changes_transporteur(selectedTourId) {
 
   const currentTourId = new URLSearchParams(window.location.search).get('waTourId');
-  const tourA_url = `https://tf-stb-kl.xdock.de/Warenausgang/Tour?sort=StatusASC&waTourId=${currentTourId}`;
-  const tourB_url = `https://tf-stb-kl.xdock.de/Warenausgang/Tour?sort=StatusASC&waTourId=${selectedTourId}`;
+  const tourA_url = `/Warenausgang/Tour?sort=StatusASC&waTourId=${currentTourId}`;
+  const tourB_url = `/Warenausgang/Tour?sort=StatusASC&waTourId=${selectedTourId}`;
 
   // Helper: serialize ALL elements linked to a form by id (including form="postform" outside the tag)
   function serializeFormById($doc, formId) {
@@ -1237,8 +1240,11 @@ function save_changes_transporteur(selectedTourId) {
             contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
             headers: { 'RequestVerificationToken': tourA_token },
             success: function () {
-              console.log('✅ Tour A updated with Tour B transporter data');
-              location.reload();
+              toastr.success('Les données ont été modifiées avec succès');
+              setTimeout(function(){
+                  location.reload();
+              },1000)
+              
             },
             error: function (xhr) {
               console.error('❌ Failed to update Tour A:', xhr.status, xhr.responseText);
@@ -1810,3 +1816,94 @@ $(document).ready(function() {
   }); 
 
 });
+
+
+//-----------------------------------//
+// select Palettes By SSCC & delete selected by sscc
+//-----------------------------------//
+function selectPalettesBySSCC() {
+    const input = prompt("Saisissez les quatre derniers chiffres de votre SSCC (séparés par +) :\nExemple:5973+4575 ");
+    
+    if (!input) return;
+
+    // Parse and clean the input
+    const suffixes = input.split('+').map(s => s.trim()).filter(s => s.length > 0);
+    
+    if (suffixes.length === 0) return;
+
+    let matchCount = 0;
+
+    // Find all barcode images with SSCC in alt attribute
+    $('img[alt]').each(function () {
+        const sscc = $(this).attr('alt');
+
+        const matched = suffixes.some(suffix => sscc.endsWith(suffix));
+
+        if (matched) {
+            // Find the closest <tr> and check the .palettenToDelete checkbox inside it
+            const $tr = $(this).closest('tr');
+            const $checkbox = $tr.find('.palettenToDelete');
+
+            // select parent postion as will
+            let postion_id= $(this).closest(".palettenTableSelectorClass").attr("id").replace("paletten_","")    
+            $(".lieferpositionToDelete[value='" + postion_id + "']").prop('checked', true).trigger('change')
+
+
+            if ($checkbox.length) {
+                $checkbox.prop('checked', true).trigger('change');
+                matchCount++;
+            }
+        }
+    });
+
+    toastr.success(`Terminé !<br> <strong>${matchCount} palette(s) sélectionnée(s).</strong> <br> > Copier les positions<br> > Supprimer des palettes sélectionnées par SSCC <br>Pour transfert des palettes vers un autre camion.`);
+    
+   
+}
+
+function deleteSelectedBySSCC() {
+       const ids = [];
+
+    $('.palettenToDelete:checked').each(function () {
+        ids.push($(this).val());
+    });
+
+    if (ids.length === 0) {
+        toastr.error(`Aucune palette sélectionnée.`);
+        return;
+    }
+
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${ids.length} palette(s) ?`)) return;
+
+    // Extract waTourId from current URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const waTourId = urlParams.get('waTourId');
+
+    if (!waTourId) {
+        toastr.error("Could not find waTourId in the current URL.");
+        return;
+    }
+
+    // Build form data: palettenToDelete[]=id1&palettenToDelete[]=id2...
+    const formData = new URLSearchParams();
+    ids.forEach(id => formData.append('palettenToDelete[]', id));
+
+    fetch(`/Warenausgang/RemovePalettenFromWaTour?waTourId=${waTourId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData.toString()
+    })
+    .then(response => {
+        if (response.ok) {
+            toastr.success(`${ids.length} palette(s) supprimée(s) avec succès.`);
+            location.reload(); // Refresh page to reflect changes
+        } else {
+             toastr.error(`Server error: ${response.status} ${response.statusText}`);
+        }
+    })
+    .catch(error => {
+        toastr.error(`Request failed: ${error.message}`);
+    });
+}
