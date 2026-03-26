@@ -534,14 +534,14 @@
             <div class="stat-row">
               <span class="stat-label">
                 <i class="fal fa-truck-container fa-flip-horizontal" style="color: #e69555;"></i> 
-                Camions décharge
+                Entrée de marchandises
               </span>
               <span class="stat-value unload-value">${data.unload}</span>
             </div>
             <div class="stat-row">
               <span class="stat-label">
                 <i class="fal fa-truck-container" style="color: #537be0;"></i> 
-                Camions chargées
+                Sortie de marchandises 
               </span>
               <span class="stat-value load-value">${data.load}</span>
             </div>
@@ -571,11 +571,11 @@
       <div class="global-stats">
         <span class="global-badge global-unload">
           <i class="fal fa-truck-container fa-flip-horizontal" style="color: #e69555;"></i> 
-          Décharge: ${globalData.totalUnload}
+          Entrées: ${globalData.totalUnload}
         </span>
         <span class="global-badge global-load">
           <i class="fal fa-truck-container" style="color: #537be0;"></i> 
-          Chargées: ${globalData.totalLoad}
+          Sorties: ${globalData.totalLoad}
         </span>
         <span class="global-badge global-total">
           <i class="fas fa-chart-simple"></i> 
