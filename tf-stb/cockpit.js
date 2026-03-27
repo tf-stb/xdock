@@ -347,6 +347,11 @@
         align-items: flex-start;
       }
     }
+    
+[type="date"]:before{
+    top: 4px !important;
+    margin-right: 5px !important;
+}
   `;
   document.head.appendChild(style);
 
