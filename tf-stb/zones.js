@@ -504,7 +504,11 @@ function parse_zones(data) {
     const enPause = is_en_pause(cells[19].innerHTML);
 
     if (status === 10) inc('noZoneCount');
-    if (cells[12].textContent.trim() && status === 10) inc('grandLotAvenir');
+     const reappro = cells[12].textContent.trim();
+  if ((reappro.includes("NAABT") || reappro.includes("GROPPER")) && status === 10) {
+      inc('grandLotAvenir');
+  }
+
     if (emplacements > 0  && status === 10) inc('SMwaitForZone');
     if ([70, 71, 72,75].includes(status)) {
       if (!enPause){
