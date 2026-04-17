@@ -1044,7 +1044,7 @@ function Selectionners_positions_encours() {
 //--------------------------------
 
 if (isSMTour) {
-  $($("#kopfdaten").children()[3]).append(
+  $($("#kopfdaten").children()[5]).append(
     `
     <div class="pt-3 dropdown">
       <a  href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
