@@ -1,8 +1,8 @@
 //***************************//
 // XDock PRO - STEF LAVAL
-// Dernière mise à jour le 25/03/2025
+// Dernière mise à jour le 19/05/2026
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.05_25/03/2024- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.06_19/05/2026- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -678,7 +678,7 @@ $('.navbar [href="/Artikel/Artikel"]').after(`
 <a class="dropdown-item" href="/#cockpit" target="_blank">SMART Cockpit</a>
 <a class="dropdown-item" href="/#portes" target="_blank">Gestion des portes</a>
 <a class="dropdown-item" href="/#zones" target="_blank">Gestion des zones</a>
-<a class="dropdown-item" href="https://tf-stb.com/iot/" target="_blank">TF-STB IoT </a>
+<a class="dropdown-item" href="https://tf-stb.com/iot/" target="_blank">Plateforme TF-STB.COM</a>
 
 `);
 
@@ -728,93 +728,92 @@ function check_avance() {
 // Remove Tournée SM From palettes
 //--------------------------------
 
-// remove SM from palete on EM
+//--------------------------------
+// Remove Tournée SM From palettes
+//--------------------------------
 
 $(document).on("click", "#removeSM", function (e) {
+    
   let selected_palettes = $(".to-be-deleted");
-  let removed = 0;
-
   // show notfication errer if no pal selected
   if (!selected_palettes.length > 0) return toastr.error(`Aucune positions sélectionnée.`);
   if (!e.ctrlKey) return toastr.info(`Veuillez rester appuyé sur CTRL pour confirmer la suppression.`);
+  const grouped = {};
 
-  // Show loding...
-  $("body").append(`
-  <div id="removeSM_modal" class="modal" tabindex="-1" role="dialog" style="background: rgb(0 0 0 / 45%);">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title">Suppression Tournée SM des positions sélectionnées</h4>
-      </div>
-      <div class="modal-body d-flex justify-content-center">
-        <div class="d-flex justify-content-center">
-          <span id="loaderTube" class="">
-            <div
-              class="loader"
-              style="padding-left: 0px; width: 50px; height: 50px"
-            ></div>
-            <span>
-              <em>Veuillez patienter...</em> <br />
-              <div  style="font-weight: bold;text-align: center;margin: 15px;" id="removed_counter"></div>
-            </span>
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-  `);
+  $('.to-be-deleted').each(function () {
+      const waTour = $(this).find(".btn-waTour")[0].innerText.trim();
+      const paletteId = $("#paletten_" + $(this).data('welpid')).find('.palettenToDelete').val();
 
-  $("#removeSM_modal").show();
-  $("body").addClass("modal-open");
-  selected_palettes.each(function (key, value) {
-    let palette = value;
-    // check if there is SM
-    if (!palette.cells[20].innerText.length > 0) {
-      toastr.warning(`Aucun SM trouvé pour certaines positions.`);
-      removed += 1;
-
-      // update counter
-      $("#removed_counter").html(`${removed}/${selected_palettes.length} positions`);
-
-      // reload if all done
-      if (removed == selected_palettes.length) return location.reload(true);
-
-      return true;
-    }
-
-    let palette_ID_URL = $(palette.cells[4]).find("a").attr("href");
-    let SM_URL = $(palette.cells[20]).find("a").attr("href");
-    let waTourId = SM_URL.split("?waTourId=")[1];
-
-    // get Palete ID on SM to delete
-    $.get(SM_URL, function (data) {
-      let palette_ID_on_SM = $(data).find(`[href="${palette_ID_URL}"]`).parent().parent().find(".lieferpositionToDelete").val();
-
-      const ids = [];
-      ids.push(palette_ID_on_SM);
-
-      // Send requst to delete the palette
-      $.post("/Warenausgang/RemoveLieferpositionsFromWaTour?waTourId=" + waTourId, { lieferpositionToDelete: ids }, function (data) {
-        if (data === true) {
-          removed += 1;
-          // update counter
-          $("#removed_counter").html(`${removed}/${selected_palettes.length} positions`);
-
-          // reload if all done
-          if (removed == selected_palettes.length) return location.reload(true);
-        } else {
-          toastr.error(`Erreur lors de la suppression des palettes. essayer à nouveau.`);
-        }
-      });
-    }).fail(function (res) {
-      toastr.error(
-        `Erreur ${res.status}, "${res.statusText}". <br> Erreur lors de la suppression des palettes. essayer à nouveau.
-         Message du serveur "${res.responseText}".`
-      );
-    });
+      if (!grouped[waTour]) {
+          grouped[waTour] = [];
+      }
+      grouped[waTour].push(paletteId);
   });
-});
+
+  const entries = Object.entries(grouped);
+  const total = entries.length;
+  let totalDeleted = 0;
+
+  // Inject modal into DOM if not already present
+  if (!document.getElementById('deletingModal')) {
+      $('body').append(`
+          <div class="modal fade" id="deletingModal" data-bs-backdrop="static" data-keyboard="false" tabindex="-1">
+              <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                      <div class="modal-body text-center py-4">
+                          <div class="spinner-border text-primary mb-3" role="status"></div>
+                          <h5 id="deletingModalMessage">Suppression en cours...</h5>
+                          <p id="deletingModalProgress" class="text-muted mb-0"></p>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      `);
+  }
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('deletingModal'));
+  modal.show();
+
+  const sendNext = (index) => {
+      if (index >= entries.length) {
+          $('#deletingModalMessage').text('Suppression terminée !');
+          $('#deletingModalProgress').text(`${totalDeleted} palette(s) supprimée(s) avec succès.`);
+          setTimeout(() => {
+              modal.hide();
+              location.reload();
+          }, 1500);
+          return;
+      }
+
+      const [waTourId, ids] = entries[index];
+
+      $('#deletingModalMessage').text(`Suppression WaTour ${waTourId}...`);
+      $('#deletingModalProgress').text(`Étape ${index + 1} / ${total}`);
+
+      const formData = new URLSearchParams();
+      ids.forEach(id => formData.append('palettenToDelete[]', id));
+
+      fetch(`/Warenausgang/RemovePalettenFromWaTour?waTourId=${waTourId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString()
+      })
+      .then(response => {
+          if (!response.ok) {
+              throw new Error(`WaTour ${waTourId}: ${response.status} ${response.statusText}`);
+          }
+          totalDeleted += ids.length;
+          setTimeout(() => sendNext(index + 1), 1000);
+      })
+      .catch(error => {
+          modal.hide();
+          toastr.error(`Erreur: ${error.message}`);
+      });
+  };
+
+    sendNext(0);
+})
 
 
 //--------------------------------
@@ -951,7 +950,7 @@ function Selectionners_positions_encours() {
 //--------------------------------
 
 if (isSMTour) {
-  $($("#kopfdaten").children()[3]).append(
+  $($("#kopfdaten").children()[5]).append(
     `
     <div class="pt-3 dropdown">
       <a  href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
