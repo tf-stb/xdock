@@ -1,6 +1,7 @@
 //***************************//
 // Warehouse Porte Management System - XDock PRO
-// V 3.1 - With Real State Checking
+// V 3.2 - With Real State Checking - updated 2024-06-20
+// Developed by [Hassan ABBAS]
 //***************************//
 
 // Add warehouse-optimized styles
@@ -369,15 +370,6 @@ const porteManagement = $(`
       </div>
     </div>
     
-    <div class="status-card tow-card">
-      <div class="status-icon">
-        <i class="fas fa-clipboard-list"></i>
-      </div>
-      <div class="status-info">
-        <div class="status-title">Multi-Affectations</div>
-        <div class="status-count" id="total-tow-affectation">0</div>
-      </div>
-    </div>
   </div>
 </div>
 `);
@@ -408,36 +400,82 @@ class WarehousePorteManager {
   }
 
   async init() {
+    this.setupEventListeners();
+    await this.refresh();
+    setInterval(() => this.refresh(), 60 * 1000);
+  }
+
+  async refresh() {
+    this._showLoading();
     await this.loadPortesData();
     this.renderPortes();
     this.updateStatusDashboard();
-    this.setupEventListeners();
+    this._hideLoading();
+  }
+
+  _showLoading() {
+    if ($("#porte-loading-overlay").length) return;
+    $("#porte-grid-container").append(`
+      <div id="porte-loading-overlay" style="
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        gap: 14px;
+        color: #7f8c8d;
+        font-size: 14px;
+      ">
+        <i class="fas fa-spinner fa-spin" style="font-size:32px; color:#3498db;"></i>
+        <span>Chargement des données en cours…</span>
+      </div>
+    `);
+  }
+
+  _hideLoading() {
+    $("#porte-loading-overlay").remove();
   }
 
   async loadPortesData() {
     try {
-      const data = await $.get("/ToreZonenCluster/ToreZonenIndex");
-      const domData = $(data);
-      
-      this.portes = domData.find("#tore-table tbody tr").map((index, row) => {
+      // Fetch the 3 pages needed for real status in parallel
+      const [gestionHtml, entrepotHtml, enCoursHtml] = await Promise.all([
+        $.get("/ToreZonenCluster/ToreZonenIndex"),
+        $.get("/Taskmanagement/TaskmanagementAmLager"),
+        $.get("/Taskmanagement/TaskmanagementInArbeit?sort=StartzeitASC"),
+      ]);
+
+      // Build set of portes currently in-use (Dans l'entrepôt + En cours)
+      const inUseSet = new Set([
+        ...this._extractPorteColumn(entrepotHtml),
+        ...this._extractPorteColumn(enCoursHtml),
+      ]);
+
+      // Parse master porte list from #tore-table only
+      const gestionDoc = $(gestionHtml);
+      const headers = gestionDoc.find("#tore-table th").map((i, th) => $(th).text().trim()).get();
+      const nomIdx    = headers.indexOf("Nom");
+      const bloqueIdx = headers.indexOf("Bloqué");
+
+      this.portes = gestionDoc.find("#tore-table tbody tr").map((index, row) => {
         const cells = $(row).find("td");
-        const num = cells.eq(1).text().trim();
-        const url = cells.eq(1).find("a").attr("href");
-        const blocked = cells.eq(3).find("input").is(":checked");
-        const affectation = parseInt(cells.eq(4).text().trim()) || 0;
-        
+        const num     = cells.eq(nomIdx).text().trim();
+        const blocked = cells.eq(bloqueIdx).text().trim() === "AB";
+        const editUrl = cells.find('a[href^="/Tore/EditTor/"]').attr("href") || null;
+
+        if (!num) return null;
+
         return {
-          id: `T${index + 0}`, // T0-T28
+          id:     `porte-${num.replace(/[^a-zA-Z0-9]/g, "_")}`,
           num,
-          url,
-          blocked,
-          affectation,
-          status: this.determineStatus(blocked, affectation)
+          url:    editUrl,
+          status: this.determineStatus(blocked, inUseSet.has(num)),
         };
-      }).get();
+      }).get().filter(Boolean);
+
     } catch (error) {
       console.error("Error loading portes data:", error);
-      // Show error to user
       $("#porte-grid-container").html(`
         <div class="alert alert-danger" style="grid-column: 1/-1">
           Erreur de chargement des données. Veuillez rafraîchir la page.
@@ -446,27 +484,42 @@ class WarehousePorteManager {
     }
   }
 
-  determineStatus(blocked, affectation) {
+  // Extract all values from the "Porte" column across all tables in an HTML string
+  _extractPorteColumn(html) {
+    const doc = $(html);
+    const values = [];
+    doc.find("table").each((i, table) => {
+      const ths = $(table).find("th").map((j, th) => $(th).text().trim()).get();
+      const colIdx = ths.indexOf("Porte");
+      if (colIdx === -1) return;
+      $(table).find("tr").each((j, row) => {
+        const val = $(row).find("td").eq(colIdx).text().trim();
+        if (val) values.push(val);
+      });
+    });
+    return values;
+  }
+
+  determineStatus(blocked, inUse) {
     if (blocked) return "blocked";
-    if (affectation === 0) return "free";
-    if (affectation > 1) return "tow_affectation";
-    return "taken";
+    if (inUse)   return "taken";
+    return "free";
   }
 
   renderPortes() {
     const gridContainer = $("#porte-grid-container");
-    gridContainer.empty();
+    gridContainer.find(".porte-container").remove(); // keep overlay out of the way if still present
 
     this.portes.forEach(porte => {
       const porteElement = $(`
-        <div class="porte-container">
-          <div id="${porte.id}" class="porte ${porte.status}" 
-               data-porte-id="${porte.id}" 
+        <a class="porte-container" href="${porte.url || '#'}" style="text-decoration:none;">
+          <div id="${porte.id}" class="porte ${porte.status}"
+               data-porte-id="${porte.id}"
                data-porte-num="${porte.num}">
             <div class="porte-door ${porte.status}"></div>
             <span class="porte-label">${porte.num}</span>
           </div>
-        </div>
+        </a>
       `);
 
       gridContainer.append(porteElement);
@@ -474,179 +527,48 @@ class WarehousePorteManager {
   }
 
   setupEventListeners() {
-    // Click handler for portes
-    $(document).on('click', '.porte', (e) => {
-      const porteId = $(e.currentTarget).data('porte-id');
-      const porte = this.portes.find(p => p.id === porteId);
-      this.showPorteDropdown(porteId, porte.url);
-      
-      // Close other open dropdowns
-      $('.porte-dropdown.show').not($(e.currentTarget).closest('.porte-container').find('.porte-dropdown')).removeClass('show');
-    });
-
-    // Close dropdown when clicking outside
-    $(document).on('click', (e) => {
-      if (!$(e.target).closest('.porte-container').length) {
-        $('.porte-dropdown.show').removeClass('show');
-      }
-    });
-  }
-
-  async showPorteDropdown(porteId, porteUrl) {
-    const container = $(`#${porteId}`).closest(".porte-container");
-    let dropdown = container.find(".porte-dropdown");
-
-    // Toggle if dropdown already exists
-    if (dropdown.length) {
-      dropdown.toggleClass("show");
-      return;
-    }
-
-    // Create new dropdown
-    dropdown = $('<div class="porte-dropdown"></div>');
-    container.append(dropdown);
-
-    // Add loading item
-    dropdown.append('<a class="dropdown-item"><i class="fas fa-spinner fa-spin"></i> Chargement...</a>');
-
-    try {
-      const data = await $.get(porteUrl);
-      const buttons = $(data).find(".btn-sm");
-      
-      // Clear loading item
-      dropdown.empty();
-      
-      // Add default "Open Porte" item
-      dropdown.append(`
-        <a href="${porteUrl}" class="dropdown-item">
-          <i class="fas fa-door-open"></i> Ouvrir Porte
-        </a>
-      `);
-      
-      // Add "Check Real State" item
-      dropdown.append(`
-        <a href="#" class="dropdown-item check-state" data-porte-id="${porteId}">
-          <i class="fas fa-sync-alt"></i> Vérifier État Réel
-        </a>
-      `);
-
-      // Add divider before action buttons
-      dropdown.append('<div class="divider"></div>');
-
-      // Add action buttons from the page
-      if (buttons.length > 0) {
-        buttons.each((index, button) => {
-          const $button = $(button);
-          const href = $button.attr("href");
-          const text = $button.text().trim();
-          const icon = $button.find("i").attr("class") || this.getActionIcon(text);
-          
-          if (href && text) {
-            const itemClass = $button.hasClass("btn-danger") ? "text-danger" : 
-                             $button.hasClass("btn-primary") ? "text-primary" : "";
-            dropdown.append(`
-              <a class="dropdown-item ${itemClass}" href="${href}">
-                <i class="${icon}"></i> ${text}
-              </a>
-            `);
-          }
-        });
-      } else {
-        dropdown.append(`
-          <a class="dropdown-item disabled">
-            <i class="fas fa-info-circle"></i> Aucune action disponible
-          </a>
-        `);
-      }
-      
-      // Add click handler for check real state
-      dropdown.find('.check-state').on('click', (e) => {
-        e.preventDefault();
-        this.checkRealState(porteId, porteUrl);
-      });
-      
-      dropdown.addClass("show");
-    } catch (error) {
-      console.error(`Error loading actions for ${porteId}:`, error);
-      dropdown.empty().append(`
-        <a class="dropdown-item text-danger">
-          <i class="fas fa-exclamation-triangle"></i> Erreur de chargement
-        </a>
-      `);
-      dropdown.addClass("show");
-    }
-  }
-
-  getActionIcon(actionText) {
-    const action = actionText.toLowerCase();
-    if (action.includes('bloquer')) return 'fas fa-lock';
-    if (action.includes('débloquer')) return 'fas fa-unlock';
-    if (action.includes('modifier')) return 'fas fa-edit';
-    if (action.includes('supprimer')) return 'fas fa-trash';
-    if (action.includes('affecter')) return 'fas fa-truck-moving';
-    return 'fas fa-truck-moving';
+    // Navigation handled by <a class="porte-container">
   }
 
   async checkRealState(porteId, porteUrl) {
     const porteElement = $(`#${porteId}`);
     const porteNum = porteElement.data('porte-num');
-    
-    // Show loading state
+
     porteElement.addClass('checking-state');
-    const originalStatus = porteElement.attr('class').replace('checking-state', '').trim();
-    
+
     try {
-      // Get the main door page
-      const data = await $.get(porteUrl);
-      const buttons = $(data).find(".btn-sm");
-      const buttonUrls = buttons.map((i, btn) => $(btn).attr('href')).get();
-      
-      // Check if there are any buttons
-      if (buttonUrls.length === 0) {
-        this.showStateResult(porteId, 'free', 'Porte libre (aucun camion affecté)');
-        return;
-      }
-      
-      // Check each truck's status
-      const statusChecks = await Promise.all(
-        buttonUrls.map(url => this.checkTruckStatus(url))
-      );
-      
-      // Analyze results
-      const allFree = statusChecks.every(status => status === 81);
-      const anyFree = statusChecks.some(status => status === 81);
-      const anyTaken = statusChecks.some(status => status < 81);
-      
-      if (allFree) {
-        this.showStateResult(porteId, 'free', 'Porte libre (tous les camions ont le statut 81)');
-      } else if (anyFree && anyTaken) {
-        this.showStateResult(porteId, 'tow_affectation', 'Porte partiellement occupée (mix de statuts 81 et autres)');
-      } else {
-        this.showStateResult(porteId, 'taken', 'Porte occupée (aucun camion avec statut 81)');
-      }
-      
+      // Re-fetch live data from the two activity pages
+      const [entrepotHtml, enCoursHtml] = await Promise.all([
+        $.get("/Taskmanagement/TaskmanagementAmLager"),
+        $.get("/Taskmanagement/TaskmanagementInArbeit?sort=StartzeitASC"),
+      ]);
+
+      const inUseSet = new Set([
+        ...this._extractPorteColumn(entrepotHtml),
+        ...this._extractPorteColumn(enCoursHtml),
+      ]);
+
+      // Blocked status comes from the stored porte data (already fetched at load)
+      const porte = this.portes.find(p => p.id === porteId);
+      const isBlocked = porte && porte.status === "blocked";
+
+      const newStatus = this.determineStatus(isBlocked, inUseSet.has(porteNum));
+
+      // Update stored status
+      if (porte) porte.status = newStatus;
+
+      const messages = {
+        free:    'Porte libre',
+        taken:   'Porte occupée',
+        blocked: 'Porte bloquée',
+      };
+      this.showStateResult(porteId, newStatus, messages[newStatus]);
+
     } catch (error) {
       console.error(`Error checking real state for ${porteId}:`, error);
-      this.showStateResult(porteId, originalStatus, 'Erreur de vérification', true);
+      this.showStateResult(porteId, 'error', 'Erreur de vérification', true);
     } finally {
       porteElement.removeClass('checking-state');
-    }
-  }
-
-  async checkTruckStatus(truckUrl) {
-    try {
-      const data = await $.get(truckUrl);
-      const statusElement = $(data).find('.tourStatus');
-      
-      if (statusElement.length) {
-        const statusText = statusElement.text().trim();
-        const statusValue = parseInt(statusText);
-        return isNaN(statusValue) ? 0 : statusValue;
-      }
-      return 0;
-    } catch (error) {
-      console.error(`Error checking truck status at ${truckUrl}:`, error);
-      return 0;
     }
   }
 
@@ -697,7 +619,6 @@ class WarehousePorteManager {
     $("#total-free").text(this.portes.filter(p => p.status === "free").length);
     $("#total-taken").text(this.portes.filter(p => p.status === "taken").length);
     $("#total-blocked").text(this.portes.filter(p => p.status === "blocked").length);
-    $("#total-tow-affectation").text(this.portes.filter(p => p.status === "tow_affectation").length);
   }
 }
 
