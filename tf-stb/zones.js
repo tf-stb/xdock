@@ -1,6 +1,7 @@
 //***************************//
 // TF-STB Map add-on for XDock PRO
-// Dernière mise à jour le 22/03/2026
+// Dernière mise à jour le 02/07/2026
+// Refactor : logique inchangée, code dédupliqué et clarifié
 //***************************//
 
 $("<style>").appendTo("head").html(`
@@ -162,168 +163,6 @@ $("<style>").appendTo("head").html(`
   footer { margin-top: 300px; }
 `);
 
-// ─── HTML Template ────────────────────────────────────────────────────────────
-
-let a4 = `
-  <div id="a4">
-    <div id="map-border"></div>
-
-    <!-- Zone M -->
-    <div class="M">
-      ${[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16].map(n => `
-        <a class="zoneM ${n % 2 ? 'first_color' : 'sec_color'}" zone="M${n}" target="_blank">
-          <div class="zone_M_name">M${n}</div>
-          <div id="M${n}"></div>
-        </a>`).join('')}
-    </div>
-
-    <!-- Zone C (bottom row: C1–C6 consecutive, then even C8–C24) -->
-    <div class="C">
-      ${[1,2,3,4,5,6,8,10,12,14,16,18,20,22,24].map(n => `
-        <a class="zoneC ${n % 2 ? 'first_color' : 'sec_color'}" zone="C${n}" target="_blank">
-          <div class="zone_C_name">C${n}</div>
-          <div id="C${n}"></div>
-        </a>`).join('')}
-    </div>
-
-    <!-- Zone C_B_L -->
-    <div class="C_B_L">
-      <div class="top">
-        ${[['B16','first_color'],['C23','sec_color'],['C21','first_color m-0']].map(([z,cls]) => `
-          <a class="zone_top_right ${cls}" zone="${z}" target="_blank">
-            <div class="zone_top_right_name">${z}</div>
-            <div id="${z}"></div>
-          </a>`).join('')}
-      </div>
-      <div class="center_B_C">
-        <div class="left_B">
-          ${[14,12,10,8,6,4,2].map(n => `
-            <a class="zone_long ${n % 4 === 2 ? 'first_color' : 'sec_color'}" zone="B${n}" target="_blank">
-              <div class="zone_long_left_name">B${n}</div>
-              <div id="B${n}"></div>
-            </a>`).join('')}
-        </div>
-        <div class="rghit_C">
-          ${[19,17,15,13,11,9,7].map(n => `
-            <a class="zone_long long_right ${n % 2 ? 'first_color' : 'sec_color'}" zone="C${n}" target="_blank">
-              <div class="zone_long_right_name">C${n}</div>
-              <div id="C${n}"></div>
-            </a>`).join('')}
-        </div>
-      </div>
-      <div class="right_L">
-        ${[8,9,10,11,12,13,14,15,16,17,18,19,20,21].map(n => `
-          <a class="zoneL ${n % 2 === 0 ? 'first_color' : 'sec_color'}" zone="L${n}" target="_blank">
-            <div class="zone_L_name">L${n}</div>
-            <div class="L_value" id="L${n}"></div>
-          </a>`).join('')}
-      </div>
-    </div>
-
-    <!-- Zone A_B_L -->
-    <div class="A_B_L">
-      <div class="top">
-        ${[['A11','first_color'],['A12','sec_color'],['B17','first_color'],['B15','sec_color'],['B13','first_color m-0']].map(([z,cls]) => `
-          <a class="zone_top_left ${cls}" zone="${z}" target="_blank">
-            <div class="zone_top_left_name">${z}</div>
-            <div id="${z}"></div>
-          </a>`).join('')}
-      </div>
-      <div class="center">
-        <div class="left_B">
-          ${[10,9,8,7,6,5].map(n => `
-            <a class="zone_long ${n % 2 === 0 ? 'first_color' : 'sec_color'}" zone="A${n}" target="_blank">
-              <div class="zone_long_left_name">A${n}</div>
-              <div id="A${n}"></div>
-            </a>`).join('')}
-        </div>
-        <div class="rghit_C">
-          ${[11,9,7,5,3,1].map(n => `
-            <a class="zone_long long_right ${n % 2 ? 'first_color' : 'sec_color'}" zone="B${n}" target="_blank">
-              <div class="zone_long_right_name">B${n}</div>
-              <div id="B${n}"></div>
-            </a>`).join('')}
-        </div>
-      </div>
-      <div class="down">
-        <div class="left_a5">
-          ${[4,3,2,1].map(n => `
-            <a class="zone_long ${n % 2 === 0 ? 'first_color' : 'sec_color'}" zone="A${n}" target="_blank">
-              <div class="zone_long_left_name">A${n}</div>
-              <div id="A${n}"></div>
-            </a>`).join('')}
-          <div class="zone_long first_color" zone="A0">
-            <div class="zone_long_left_name"></div>
-            <div id="A0"></div>
-          </div>
-          <a class="zone_long l1 sec_color" zone="L1" target="_blank">
-            <div class="zone_long_left_name l1_name">L1</div>
-            <div id="L1"></div>
-          </a>
-        </div>
-        <div class="right">
-          ${[2,3,4,5,6,7].map(n => `
-            <a class="zoneL ${n % 2 === 0 ? 'sec_color' : 'first_color'}" zone="L${n}" target="_blank">
-              <div class="zone_L_name">L${n}</div>
-              <div class="L_value" id="L${n}"></div>
-            </a>`).join('')}
-        </div>
-      </div>
-    </div>
-
-   
-    <div class="guide d-flex">
-      <div class="gud_item"><div class="color free"></div>    <span class="title">Zones libres</span>      <span id="total_free"></span></div>
-      <div class="gud_item"><div class="color taken"></div>   <span class="title">Zones occupées</span>    <span id="total_taken"></span></div>
-      <div class="gud_item"><div class="color blocked"></div> <span class="title">Zones bloquées</span>    <span id="total_blocked"></span></div>
-      <div class="gud_item"><div class="color en_cours"></div><span class="title">SM en cours</span>       <span id="total_en_cours"></span></div>
-      <div class="gud_item"><div class="color de_avance"></div><span class="title">Marchandises en avance</span><span id="total_de_avance"></span></div>
-      <div class="gud_item"><div class="color de_hier"></div> <span class="title">Reliquats</span>         <span id="total_de_hier"></span></div>
-      <div class="gud_item"><div class="color first_color"></div><span class="title">Données inconnues</span></div>
-      <div class="gud_item"><span class="date d-none">Date d'impression: <span id="date_of_print"></span></span></div>
-    </div>
-
-
-
-     <!-- countdown -->
-
-        <div class="countdown-container">
-        
-        <div class="countItem ml-2">
-         <div class="countdown-number" id="noZoneCount">0</div>
-        <div> SM non zonés</div>
-        </div>
-          <div class="divider-count"></div>
-           <div class="countItem">
-              <div class="countdown-number" id="readyToLoad">0</div>
-              <div> Possibilité de chargement*</div>
-          </div>
-           <div class="divider-count"></div>
-           <div class="countItem">
-              <div class="countdown-number" id="grandLotAvenir">0</div>
-              <div> Grand lot à venir</div>
-          </div>
-
-           <div class="divider-count"></div>
-           <div class="countItem">
-              <div class="countdown-number" id="SMwaitForZone">0</div>
-              <div> SM en attente de zone immédiate</div>
-          </div>
-        
-        
-      
-       </div>
-
-  
-  <!-- /countdown-container -->
-
-    <div class="info mt-4 text-muted">
-      <p class="mb-1"><strong><i class="fal fa-info-circle"></i> alt + clic</strong> sur une zone occupée pour ouvrir le SM correspondant dans une nouvelle fenêtre</strong></p>
-      <p>* Le nombre de camions en attente de chargement sur le parking ou à la porte. Disponible tout de suite, sans pause prévue.</p>
-      
-    </div>
-  </div>`;
-
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TOTAL_ZONES = 90;
@@ -337,8 +176,23 @@ const STATUS = {
   BLOCKED:   'blocked',
 };
 
-// Status codes that map to en_cours
-const EN_COURS_CODES = new Set([80, 81]);
+// Status codes coming from the WA table
+const EN_COURS_CODES       = new Set([80, 81]);
+const READY_TO_LOAD_CODES  = new Set([70, 71, 72, 75]);
+const CODE_NO_ZONE         = 10;
+const CODE_ZONE_BLOCKED    = 44;
+
+// Column indices shared by the truck rows and the zone lookup rows
+// (both come from the same #wa-table structure)
+const CELL = {
+  SM_ID:        0,
+  STATUS:       1,
+  EMPLACEMENTS: 2,
+  REF_LOCATION: 6,
+  SPECIAL_REF:  8,
+  REAPPRO:      12,
+  PAUSE_INFO:   19,
+};
 
 /**
  * Lookup map: normalized location name → 3-letter code.
@@ -425,6 +279,154 @@ const BLOCKED_REASON_MAP = [
   { keyword: 'groupage',        label: 'Groupage' },
 ];
 
+// ─── HTML Template ────────────────────────────────────────────────────────────
+
+/**
+ * Builds a single zone anchor <a class="wrapClass colorClass" zone="Z" target="_blank">
+ * with a name label and a value slot (optionally rotated for the L columns).
+ * Every zone link in the map is built from this one function so the markup
+ * only needs to be maintained in a single place.
+ */
+function zoneAnchor(zone, wrapClass, colorClass, nameClass, valueClass = '') {
+  const valueAttr = valueClass ? ` class="${valueClass}"` : '';
+  return `<a class="${wrapClass} ${colorClass}" zone="${zone}" target="_blank">
+      <div class="${nameClass}">${zone}</div>
+      <div${valueAttr} id="${zone}"></div>
+    </a>`;
+}
+
+const zoneM = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+  .map(n => zoneAnchor(`M${n}`, 'zoneM', n % 2 ? 'first_color' : 'sec_color', 'zone_M_name'))
+  .join('');
+
+// C1–C6 consecutive, then even C8–C24
+const zoneCBottom = [1,2,3,4,5,6,8,10,12,14,16,18,20,22,24]
+  .map(n => zoneAnchor(`C${n}`, 'zoneC', n % 2 ? 'first_color' : 'sec_color', 'zone_C_name'))
+  .join('');
+
+const cblTop = [['B16','first_color'],['C23','sec_color'],['C21','first_color m-0']]
+  .map(([z, cls]) => zoneAnchor(z, 'zone_top_right', cls, 'zone_top_right_name'))
+  .join('');
+
+const cblLeftB = [14,12,10,8,6,4,2]
+  .map(n => zoneAnchor(`B${n}`, 'zone_long', n % 4 === 2 ? 'first_color' : 'sec_color', 'zone_long_left_name'))
+  .join('');
+
+const cblRightC = [19,17,15,13,11,9,7]
+  .map(n => zoneAnchor(`C${n}`, 'zone_long long_right', n % 2 ? 'first_color' : 'sec_color', 'zone_long_right_name'))
+  .join('');
+
+const cblRightL = [8,9,10,11,12,13,14,15,16,17,18,19,20,21]
+  .map(n => zoneAnchor(`L${n}`, 'zoneL', n % 2 === 0 ? 'first_color' : 'sec_color', 'zone_L_name', 'L_value'))
+  .join('');
+
+const ablTop = [['A11','first_color'],['A12','sec_color'],['B17','first_color'],['B15','sec_color'],['B13','first_color m-0']]
+  .map(([z, cls]) => zoneAnchor(z, 'zone_top_left', cls, 'zone_top_left_name'))
+  .join('');
+
+const ablCenterLeftB = [10,9,8,7,6,5]
+  .map(n => zoneAnchor(`A${n}`, 'zone_long', n % 2 === 0 ? 'first_color' : 'sec_color', 'zone_long_left_name'))
+  .join('');
+
+const ablCenterRightC = [11,9,7,5,3,1]
+  .map(n => zoneAnchor(`B${n}`, 'zone_long long_right', n % 2 ? 'first_color' : 'sec_color', 'zone_long_right_name'))
+  .join('');
+
+const ablDownLeftA = [4,3,2,1]
+  .map(n => zoneAnchor(`A${n}`, 'zone_long', n % 2 === 0 ? 'first_color' : 'sec_color', 'zone_long_left_name'))
+  .join('');
+
+// A0 is a static (non-clickable) placeholder, not a real zone link
+const zoneA0 = `
+          <div class="zone_long first_color" zone="A0">
+            <div class="zone_long_left_name"></div>
+            <div id="A0"></div>
+          </div>`;
+
+const zoneL1 = zoneAnchor('L1', 'zone_long l1', 'sec_color', 'zone_long_left_name l1_name');
+
+const ablDownRightL = [2,3,4,5,6,7]
+  .map(n => zoneAnchor(`L${n}`, 'zoneL', n % 2 === 0 ? 'sec_color' : 'first_color', 'zone_L_name', 'L_value'))
+  .join('');
+
+let a4 = `
+  <div id="a4">
+    <div id="map-border"></div>
+
+    <!-- Zone M -->
+    <div class="M">${zoneM}</div>
+
+    <!-- Zone C (bottom row) -->
+    <div class="C">${zoneCBottom}</div>
+
+    <!-- Zone C_B_L -->
+    <div class="C_B_L">
+      <div class="top">${cblTop}</div>
+      <div class="center_B_C">
+        <div class="left_B">${cblLeftB}</div>
+        <div class="rghit_C">${cblRightC}</div>
+      </div>
+      <div class="right_L">${cblRightL}</div>
+    </div>
+
+    <!-- Zone A_B_L -->
+    <div class="A_B_L">
+      <div class="top">${ablTop}</div>
+      <div class="center">
+        <div class="left_B">${ablCenterLeftB}</div>
+        <div class="rghit_C">${ablCenterRightC}</div>
+      </div>
+      <div class="down">
+        <div class="left_a5">
+          ${ablDownLeftA}
+          ${zoneA0}
+          ${zoneL1}
+        </div>
+        <div class="right">${ablDownRightL}</div>
+      </div>
+    </div>
+
+    <div class="guide d-flex">
+      <div class="gud_item"><div class="color free"></div>    <span class="title">Zones libres</span>      <span id="total_free"></span></div>
+      <div class="gud_item"><div class="color taken"></div>   <span class="title">Zones occupées</span>    <span id="total_taken"></span></div>
+      <div class="gud_item"><div class="color blocked"></div> <span class="title">Zones bloquées</span>    <span id="total_blocked"></span></div>
+      <div class="gud_item"><div class="color en_cours"></div><span class="title">SM en cours</span>       <span id="total_en_cours"></span></div>
+      <div class="gud_item"><div class="color de_avance"></div><span class="title">Marchandises en avance</span><span id="total_de_avance"></span></div>
+      <div class="gud_item"><div class="color de_hier"></div> <span class="title">Reliquats</span>         <span id="total_de_hier"></span></div>
+      <div class="gud_item"><div class="color first_color"></div><span class="title">Données inconnues</span></div>
+      <div class="gud_item"><span class="date d-none">Date d'impression: <span id="date_of_print"></span></span></div>
+    </div>
+
+    <!-- countdown -->
+    <div class="countdown-container">
+      <div class="countItem ml-2">
+        <div class="countdown-number" id="noZoneCount">0</div>
+        <div> SM non zonés</div>
+      </div>
+      <div class="divider-count"></div>
+      <div class="countItem">
+        <div class="countdown-number" id="readyToLoad">0</div>
+        <div> Possibilité de chargement*</div>
+      </div>
+      <div class="divider-count"></div>
+      <div class="countItem">
+        <div class="countdown-number" id="grandLotAvenir">0</div>
+        <div> Grand lot à venir</div>
+      </div>
+      <div class="divider-count"></div>
+      <div class="countItem">
+        <div class="countdown-number" id="SMwaitForZone">0</div>
+        <div> SM en attente de zone immédiate</div>
+      </div>
+    </div>
+    <!-- /countdown-container -->
+
+    <div class="info mt-4 text-muted">
+      <p class="mb-1"><strong><i class="fal fa-info-circle"></i> alt + clic</strong> sur une zone occupée pour ouvrir le SM correspondant dans une nouvelle fenêtre</strong></p>
+      <p>* Le nombre de camions en attente de chargement sur le parking ou à la porte. Disponible tout de suite, sans pause prévue.</p>
+    </div>
+  </div>`;
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 $("#img-zonenuebersicht").replaceWith(a4);
@@ -450,17 +452,14 @@ const selected_date = window.location.href.includes("?selectedDate=")
   ? window.location.href.split("?selectedDate=")[1]
   : $("#selectedDate").val();
 
-// ─── function is_en_pause ────────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function is_en_pause(tr) {
   if (!tr) return false; // avoid errors on null/undefined
   const text = tr.toLowerCase();
-  const words_to_search = ["en pause", "decroche", "fdc", "decrocher", "dispo","disponible","revient","skip"];
-
+  const words_to_search = ["en pause", "decroche", "fdc", "decrocher", "dispo", "disponible", "revient", "skip"];
   return words_to_search.some(word => text.includes(word));
 }
-
-// ─── Date Helpers ─────────────────────────────────────────────────────────────
 
 /**
  * Returns a YYYY-MM-DD date string offset from today by `offset` days.
@@ -476,99 +475,121 @@ function getOffsetDate(offset) {
   ].join('-');
 }
 
-// ─── Location Codes ───────────────────────────────────────────────────────────
-
 /**
  * Returns the 3-letter code for a given location name, or '???' if unknown.
  * @param {string} ref - Raw location name from the server.
- * @returns {string}
  */
 function get_ref_code(ref) {
   return LOCATION_CODE_MAP[ref.trim().toLowerCase()] ?? '???';
 }
 
+/**
+ * Cache for /Warenausgang/TagZones?selectedDate=... so each date's JSON is
+ * only ever fetched once, no matter how many places in the code need it
+ * (initial load, date change, advance/reliquat overlays, ...).
+ * Keyed by date string, values are the in-flight/resolved promise.
+ */
+const zonesJSONCache = new Map();
+
+/**
+ * Fetches (and caches) the zones JSON for a given date.
+ * @param {string} date - YYYY-MM-DD
+ * @returns {Promise<Array>} resolved zones array
+ */
+function fetchZonesJSON(date) {
+  if (!zonesJSONCache.has(date)) {
+    const promise = $.get(`/Warenausgang/TagZones?selectedDate=${date}`)
+      .then(jsonZones => (typeof jsonZones === 'string' ? JSON.parse(jsonZones) : jsonZones));
+    zonesJSONCache.set(date, promise);
+  }
+  return zonesJSONCache.get(date);
+}
+
+/**
+ * Finds the WA table row for a given zone id in the given day's HTML,
+ * and resolves its location code. Shared by parse_zones() and load_other_day()
+ * so the "find the row / resolve the ref" logic only lives in one place.
+ * @returns {{cells: JQuery, ref: string} | null}
+ */
+function get_zone_row(data, zoneID) {
+  const cells = data.find(`[data-selected-zone-id='${zoneID}']`).parent().parent().parent().children();
+  if (!cells.length) return null;
+
+  let ref = get_ref_code(cells.eq(CELL.REF_LOCATION).text().trim());
+  if (ref === 'GCA?_TEN?') {
+    ref = cells.eq(CELL.SPECIAL_REF).text().trim().substring(11, 15);
+  }
+  return { cells, ref };
+}
+
 // ─── Data Parsing ─────────────────────────────────────────────────────────────
-function parse_zones(data) {
+
+function parse_zones(data, zonesArray) {
   const zones = [];
-
-  // ─── Counters ─────────────────────────────────────────────────────────────
-  const counters = {noZoneCount: 0, readyToLoad: 0, grandLotAvenir: 0, SMwaitForZone:0,preload:0};
-
+  const counters = { noZoneCount: 0, readyToLoad: 0, grandLotAvenir: 0, SMwaitForZone: 0, preload: 0 };
   const inc = (key) => counters[key]++;
+  const smWaitForZoneRefs = [];
 
   // ─── Truck loop ───────────────────────────────────────────────────────────
   data.find('#wa-table tbody tr').each(function (_, el) {
-    const cells   = el.cells;
-    const status  = parseInt(cells[1].textContent.trim());
-    const emplacements= parseInt(cells[2].textContent.trim());
-    const enPause = is_en_pause(cells[19].innerHTML);
+    const cells = el.cells;
+    const status = parseInt(cells[CELL.STATUS].textContent.trim());
+    const emplacements = parseInt(cells[CELL.EMPLACEMENTS].textContent.trim());
+    const enPause = is_en_pause(cells[CELL.PAUSE_INFO].innerHTML);
+    const reappro = cells[CELL.REAPPRO].textContent.trim();
 
-    if (status === 10) inc('noZoneCount');
-     const reappro = cells[12].textContent.trim();
-  if ((reappro.includes("NAABT") || reappro.includes("GROPPER")) && status === 10) {
-      inc('grandLotAvenir');
-  }
-
-    if (emplacements > 0  && status === 10) inc('SMwaitForZone');
-    if ([70, 71, 72,75].includes(status)) {
-      if (!enPause){
-        inc('readyToLoad');
+    if (status === CODE_NO_ZONE) {
+      inc('noZoneCount');
+      if (reappro.includes("NAABT") || reappro.includes("GROPPER")) inc('grandLotAvenir');
+      if (emplacements > 0) {
+        inc('SMwaitForZone');
+        smWaitForZoneRefs.push(get_ref_code(cells[CELL.REF_LOCATION].textContent.trim()));
       }
     }
+    if (READY_TO_LOAD_CODES.has(status) && !enPause) inc('readyToLoad');
   });
-  // ─── Zone loop ────────────────────────────────────────────────────────────
-  data.find("#ZoneBase > select > option").each(function () {
-    const option  = $(this);
-    const zoneID  = parseInt(option.val());
-    const zoneName = option.html();
 
-    if (option.hasClass("zone-in-verwendung-auslieferungstermin")) {
-      // Zone in use today
+  // ─── Zone loop ────────────────────────────────────────────────────────────
+  zonesArray.forEach(function (zoneItem) {
+    const { id: zoneID, name: zoneName } = zoneItem;
+
+    if (zoneItem.isBelegtAmAuslieferungstermin) {
       if (zoneName.trim().startsWith("ZT")) inc('preload');
 
-      const cells   = data.find(`[data-selected='${zoneID}']`).parent().children();
-      const SM_ID   = cells.eq(0).text().trim();
-      let   ref     = get_ref_code(cells.eq(6).text().trim());
+      const row = get_zone_row(data, zoneID);
+      const SM_ID = row.cells.eq(CELL.SM_ID).text().trim();
+      const lpStatus = parseInt(row.cells.eq(CELL.STATUS).text());
 
-      if (ref === 'GCA?_TEN?') {
-        ref = cells.eq(8).text().trim().substring(11, 15);
-      }
+      let zStatus = STATUS.TAKEN;
+      if (EN_COURS_CODES.has(lpStatus)) zStatus = STATUS.EN_COURS;
+      else if (lpStatus === CODE_ZONE_BLOCKED) zStatus = STATUS.BLOCKED;
 
-      const lpStatus = parseInt(cells.eq(1).text());
-      let   zStatus  = STATUS.TAKEN;
-      if (EN_COURS_CODES.has(lpStatus))  zStatus = STATUS.EN_COURS;
-      else if (lpStatus === 44)          zStatus = STATUS.BLOCKED;
+      zones.push({ id: zoneID, name: zoneName, ref: row.ref, status: zStatus, SM_ID });
 
-      zones.push({ id: zoneID, name: zoneName, ref, status: zStatus, SM_ID });
+    } else if (zoneItem.isBelegtInDerVergangenheit) {
+      zones.push({ id: zoneID, name: zoneName, ref: '', status: STATUS.DE_HIER, SM_ID: '' });
 
-    } else if (option.hasClass("zone-in-verwendung-vergangenheit")) {
-      // Zone used yesterday
-      zones.push({ id: zoneID, name: zoneName, ref: '', status: STATUS.DE_HIER,   SM_ID: '' });
-
-    } else if (option.hasClass("zone-in-verwendung-zukunft")) {
-      // Zone scheduled ahead
+    } else if (zoneItem.isBelegtInZukunft) {
       zones.push({ id: zoneID, name: zoneName, ref: '', status: STATUS.DE_AVANCE, SM_ID: '' });
 
-    } else if (option.is(":disabled")) {
-      zones.push({ id: zoneID, name: zoneName, ref: '', status: STATUS.BLOCKED,   SM_ID: '' });
+    } else if (zoneItem.disabled) {
+      zones.push({ id: zoneID, name: zoneName, ref: '', status: STATUS.BLOCKED, SM_ID: '' });
 
     } else {
-      zones.push({ id: zoneID, name: zoneName, ref: '', status: STATUS.FREE,      SM_ID: '' });
+      zones.push({ id: zoneID, name: zoneName, ref: '', status: STATUS.FREE, SM_ID: '' });
     }
   });
 
-  // ─── DOM update ───────────────────────────────────────────────────────────
- 
-//  const counters = {noZoneCount: 0, readyToLoad: 0, grandLotAvenir: 0, SMwaitForZone:0,preload:0};
-
- $("#noZoneCount").html(counters.noZoneCount)
- $("#readyToLoad").html(counters.readyToLoad - counters.preload)
- $("#grandLotAvenir").html(counters.grandLotAvenir)
- $("#SMwaitForZone").html(counters.SMwaitForZone)
+  $("#noZoneCount").html(counters.noZoneCount);
+  $("#readyToLoad").html(counters.readyToLoad - counters.preload);
+  $("#grandLotAvenir").html(counters.grandLotAvenir);
+  $("#SMwaitForZone")
+    .html(counters.SMwaitForZone)
+    .attr('title', smWaitForZoneRefs.length ? smWaitForZoneRefs.join(', ') : 'Aucun SM en attente de zone')
+    .css('cursor', 'help');
 
   return zones;
 }
- 
 
 // ─── Map Rendering ────────────────────────────────────────────────────────────
 
@@ -584,40 +605,39 @@ function update_map() {
   });
 
   // Update legend counters
-  const statuses = [STATUS.FREE, STATUS.TAKEN, STATUS.BLOCKED, STATUS.EN_COURS, STATUS.DE_AVANCE, STATUS.DE_HIER];
-  statuses.forEach(s => {
-    $(`#total_${s}`).html(`(${$(`.${s}`).not('.color').length})`);
-  });
+  [STATUS.FREE, STATUS.TAKEN, STATUS.BLOCKED, STATUS.EN_COURS, STATUS.DE_AVANCE, STATUS.DE_HIER]
+    .forEach(s => $(`#total_${s}`).html(`(${$(`.${s}`).not('.color').length})`));
 
-
-  // Ctrl+click opens SM URL
-  $(document).on('click', 'a[zone]', function (e) {
-    
-    if (e.altKey) {
-      e.preventDefault();
-      window.open($(this).attr('SM_href'), '_blank');
-    }
-  });
-
-  const totalDeHier = $(`.de_hier`).not('.color').length
-  const totalAvance =$(`.de_avance`).not('.color').length
+  const totalDeHier = $(`.de_hier`).not('.color').length;
+  const totalAvance = $(`.de_avance`).not('.color').length;
 
   zones_preliv();
-  if(totalDeHier > 0){show_SM_hier();}
-  if(totalAvance > 0){show_avance();}
-  
+  if (totalDeHier > 0) show_SM_hier();
+  if (totalAvance > 0) show_avance();
 }
+
+// Alt+click opens the SM URL. Bound once (delegated), not inside update_map,
+// so it doesn't get re-registered — and re-fired multiple times per click —
+// on every date change / auto-refresh.
+$(document).on('click', 'a[zone]', function (e) {
+  if (e.altKey) {
+    e.preventDefault();
+    window.open($(this).attr('SM_href'), '_blank');
+  }
+});
 
 // ─── Zone Status Update ───────────────────────────────────────────────────────
 
-function update_zone_status(dataServ) {
-  const data = $(dataServ);
-  updated_zones = parse_zones(data);
-  update_map();
+function update_zone_status(htmlData, dateStr) {
+  const data = $(htmlData);
+
+  fetchZonesJSON(dateStr).then(zonesArray => {
+    updated_zones = parse_zones(data, zonesArray);
+    update_map();
+  });
 }
 
 // ─── Adjacent Day Overlays ────────────────────────────────────────────────────
-
 
 /**
  * Fetches zone data for a day offset from today and appends ref codes to zones.
@@ -626,25 +646,25 @@ function update_zone_status(dataServ) {
  */
 function load_other_day(dayOffset) {
   const date = getOffsetDate(dayOffset);
+
   $.get(`/Warenausgang/Tag?sort=StatusASC&selectedDate=${date}`, function (dataServ) {
     const data = $(dataServ);
-    data.find("#ZoneBase>select>option").each(function () {
-      const option = $(this);
-      const zoneID = parseInt(option.val());
 
-      if (!option.hasClass("zone-in-verwendung-auslieferungstermin")) return;
+    fetchZonesJSON(date).then(zonesArray => {
+      zonesArray.forEach(function (zoneItem) {
+        if (!zoneItem.isBelegtAmAuslieferungstermin) return;
 
-      const cells = data.find(`[data-selected='${zoneID}']`).parent().children();
-      let ref = get_ref_code(cells.eq(6).text().trim());
-      if (ref === 'GCA?_TEN?') ref = cells.eq(8).text().trim().substring(11, 15);
+        const row = get_zone_row(data, zoneItem.id);
+        if (!row) return;
 
-      $('#' + option.html()).html(ref);
+        $('#' + zoneItem.name).html(row.ref);
+      });
     });
   });
 }
 
-function show_avance()   { load_other_day(+1); }
-function show_SM_hier()  { load_other_day(-1); }
+function show_avance()  { load_other_day(+1); }
+function show_SM_hier() { load_other_day(-1); }
 
 // ─── Blocked Zone Labels ──────────────────────────────────────────────────────
 
@@ -679,11 +699,9 @@ $(document).on('click', '#check-double-zonage', function () {
       }
     });
 
-    if (doubleCount > 0) {
-      toastr.error('Double zonage détecté');
-    } else {
-      toastr.success('Aucun double zonage détecté');
-    }
+    toastr[doubleCount > 0 ? 'error' : 'success'](
+      doubleCount > 0 ? 'Double zonage détecté' : 'Aucun double zonage détecté'
+    );
   });
 });
 
@@ -698,22 +716,23 @@ window.addEventListener('beforeprint', () => {
 // ─── Date Change ─────────────────────────────────────────────────────────────
 
 $('#selectedDate').on('change', function () {
+  const currentVal = $(this).val();
   $('#a4').replaceWith(a4);
-  $.get(`/Warenausgang/Tag?sort=ZielortLokationNameASC&selectedDate=${$(this).val()}`, function (data) {
-    update_zone_status(data);
+  $.get(`/Warenausgang/Tag?sort=ZielortLokationNameASC&selectedDate=${currentVal}`, function (data) {
+    update_zone_status(data, currentVal);
   });
-  window.location.href = `${window.location.href}?selectedDate=${$(this).val()}`;
+  window.location.href = `${window.location.href.split('?')[0]}?selectedDate=${currentVal}`;
 });
 
 // ─── Initial Load ─────────────────────────────────────────────────────────────
 
 $(document).ready(function () {
   $.get(`/Warenausgang/Tag?sort=StatusASC&selectedDate=${selected_date}`, function (data) {
-    update_zone_status(data);
+    update_zone_status(data, selected_date);
   });
 
-  // reload the page after 60 secends
-  setTimeout(function(){
-    window.location.reload()
-  },60000)
+  // reload the page after 60 seconds
+  setTimeout(function () {
+    window.location.reload();
+  }, 60000);
 });
