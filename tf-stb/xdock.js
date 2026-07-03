@@ -1,9 +1,9 @@
 //***************************//
 // XDock PRO - tf-stb.com
-// Dernière mise à jour le 18/05/2026
+// Dernière mise à jour le 03/07/2026
 // Copyright  ABBAS Hassan
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.19_18/05/2026- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.20_03/07/2026- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -478,8 +478,8 @@ if (window.location.href.includes("Warenausgang/AddLieferpositionen?waTourId")) 
       for (const palette of palettesAvilebal) {
         // check if is id in clipboard
 
-        const paletteGTIN = $(palette)[0].cells[5].innerText;
-        const paletteEM = $(palette)[0].cells[16].innerText.trim();
+        const paletteGTIN = $(palette)[0].cells[4].innerText;
+        const paletteEM = $(palette)[0].cells[15].innerText.trim();
         console.log(paletteEM);
 
         if (clipData.includes(paletteGTIN) || clipData.includes(paletteEM)) {
