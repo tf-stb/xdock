@@ -1,9 +1,9 @@
 //***************************//
 // XDock PRO - tf-stb.com
-// Dernière mise à jour le 03/07/2026
+// Dernière mise à jour le 07/07/2026
 // Copyright  ABBAS Hassan
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.20_03/07/2026- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.21_07/07/2026- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -768,7 +768,7 @@ LS numérique
 $('.navbar [href="/Artikel/Artikel"]').after(`
 <hr>
 <div style="font-size: 12px; font-weight: bold; margin-left: 15px;" class="">XDock PRO:</div>
-<a class="dropdown-item" href="/#cockpit" target="_blank">Répartition par équipe</a>
+<a class="dropdown-item" href="https://tf-stb.com/iot/suivi-quai/" target="_blank">Suivi Quai 24h/24</a>
 <a class="dropdown-item" href="/#portes" target="_blank">Gestion des portes</a>
 <a class="dropdown-item" href="/#zones" target="_blank"> Gestion des zones</a>
 <a class="dropdown-item" href="https://tf-stb.com/iot/" target="_blank">Plateforme TF-STB.COM</a>
