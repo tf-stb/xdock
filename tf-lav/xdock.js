@@ -1,8 +1,8 @@
 //***************************//
 // XDock PRO - STEF LAVAL
-// Dernière mise à jour le 19/05/2026
+// Dernière mise à jour le 13/08/2026
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.06_19/05/2026- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.07_13/08/2026- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -724,9 +724,7 @@ function check_avance() {
   });
 }
 
-//--------------------------------
-// Remove Tournée SM From palettes
-//--------------------------------
+
 
 //--------------------------------
 // Remove Tournée SM From palettes
@@ -814,7 +812,6 @@ $(document).on("click", "#removeSM", function (e) {
 
     sendNext(0);
 })
-
 
 //--------------------------------
 // check if livraison Samedi or lundi
