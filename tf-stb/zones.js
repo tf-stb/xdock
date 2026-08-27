@@ -277,8 +277,8 @@ const BLOCKED_REASON_MAP = [
   { keyword: 'mix',             label: 'Mix' },
   { keyword: 'stock',           label: 'Stock' },
   { keyword: 'groupage',        label: 'Groupage' },
-  { keyword: 'naabtaler',        label: 'NAABTALER' },
-  { keyword: 'cerelia',        label: 'CERELIA' },
+  { keyword: 'naabtaler',        label: 'Naabtaler' },
+  { keyword: 'cerelia',        label: 'Cérélia' },
 ];
 
 // ─── HTML Template ────────────────────────────────────────────────────────────
