@@ -1,9 +1,9 @@
 //***************************//
 // XDock PRO - tf-stb.com
-// Dernière mise à jour le 07/07/2026
+// Dernière mise à jour le 31/08/2026
 // Copyright  ABBAS Hassan
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.21_07/07/2026- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.22_31/08/2026- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -261,20 +261,20 @@ function task_manger() {
   // inject btns
   switch (parseInt(tourStatus)) {
     case 80:
-      $(".xdock-head-row > .col-4 > .d-flex.flex-row").append(Block_btn_html);
+      $(".tourStatus").parent().parent().append(Block_btn_html);
       break;
     case 75: // Entrée de marchandises à la porte
-      $(".xdock-head-row > .col-4 > .d-flex.flex-row").append(Block_btn_html);
+      $(".tourStatus").parent().parent().append(Block_btn_html);
       break;
     case 44: // bloque
-      $(".xdock-head-row > .col-4 > .d-flex.flex-row").append(deblock_btn_html);
+       $(".tourStatus").parent().parent().append(deblock_btn_html);
       break;
 
     default:
       // fix bloked en cours in defrent status
       if ($("#tel").prop("readonly")) {
         // The input is readonly
-        $(".xdock-head-row > .col-4 > .d-flex.flex-row").append(Block_btn_html);
+         $(".tourStatus").parent().parent().append(Block_btn_html);
       }
       break;
   }
@@ -1866,7 +1866,7 @@ function deleteSelectedBySSCC() {
         return;
     }
 
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${ids.length} palette(s) ?`)) return;
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${ids.length} palette(s) ?`)) return;
 
     // Extract waTourId from current URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -1900,4 +1900,3 @@ function deleteSelectedBySSCC() {
         toastr.error(`Request failed: ${error.message}`);
     });
 }
-
