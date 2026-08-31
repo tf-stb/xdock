@@ -1,8 +1,8 @@
 //***************************//
 // XDock PRO - STEF LAVAL
-// Dernière mise à jour le 13/08/2026
+// Dernière mise à jour le 31/08/2026
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.07_13/08/2026- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.08_31/08/2026- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -273,22 +273,23 @@ function task_manger() {
   let deblock_btn_html = '<div class="p-2 m-auto "><button id="ha_deblock_task" class="btn btn-outline-primary">Valider la tâche</button></div>';
 
   // inject btns
+  // inject btns
   switch (parseInt(tourStatus)) {
     case 80:
-      $(".xdock-head-row > .col-4 > .d-flex.flex-row").append(Block_btn_html);
+      $(".tourStatus").parent().parent().append(Block_btn_html);
       break;
     case 75: // Entrée de marchandises à la porte
-      $(".xdock-head-row > .col-4 > .d-flex.flex-row").append(Block_btn_html);
+      $(".tourStatus").parent().parent().append(Block_btn_html);
       break;
     case 44: // bloque
-      $(".xdock-head-row > .col-4 > .d-flex.flex-row").append(deblock_btn_html);
+       $(".tourStatus").parent().parent().append(deblock_btn_html);
       break;
 
     default:
       // fix bloked en cours in defrent status
       if ($("#tel").prop("readonly")) {
         // The input is readonly
-        $(".xdock-head-row > .col-4 > .d-flex.flex-row").append(Block_btn_html);
+         $(".tourStatus").parent().parent().append(Block_btn_html);
       }
       break;
   }
