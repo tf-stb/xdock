@@ -1,9 +1,9 @@
 //***************************//
 // XDock PRO - tf-stb.com
-// Dernière mise à jour le 31/08/2026
+// Dernière mise à jour le 12/10/2026
 // Copyright  ABBAS Hassan
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.22_31/08/2026- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.23_12/10/2026- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -250,8 +250,9 @@ const isEMTour = window.location.href.includes("Wareneingang/Tour") ? true : fal
 
 function task_manger() {
   let tourStatus = $(".tourStatus").html();
-  let tourID = window.location.href.split("TourId=")[1].substr(0, 8);
-  let iswetour = window.location.href.includes("Wareneingang") ? "True" : "False";
+  //let tourID = $("#tourid").val();
+  let iswetour = window.location.href.includes("Wareneingang") ? "true" : "false";
+  let tourID = window.location.href.includes("Wareneingang") ? $("input[name='WeTourHeader.WeTourId']").val() : $("#tourid").val();
   let collaborateur = $("#mitarbeiterId").val();
   let working = false;
 
@@ -289,8 +290,8 @@ function task_manger() {
     $.post(
       "/Taskmanagement/TaskSperrenErzwingen",
       {
-        tourId: parseInt(tourID),
-        isWeTour: iswetour,
+        'tourId': parseInt(tourID),
+        'isWeTour': iswetour
       },
       function (data) {
         if (data === true) {
@@ -299,7 +300,7 @@ function task_manger() {
             window.location.reload();
           });
         } else {
-          toastr.error(`Erreur "${data}", <br> Une erreur est survenue lors du blocage.<br>veuillez réessayer`);
+          toastr.error(`Erreur "${data}", <br>xxx Une erreur est survenue lors du blocage.<br>veuillez réessayer`);
           working = false;
         }
       }
@@ -319,10 +320,10 @@ function task_manger() {
 
     $.post(
       "/Taskmanagement/TaskFreigeben",
-      {
-        tourId: tourID,
-        isWeTour: iswetour,
-      },
+        {
+          'tourId': parseInt(tourID),
+          'isWeTour': iswetour
+        },
       function (data) {
         if (data === true) {
           window.location.reload();
@@ -512,7 +513,6 @@ if (isEMTour) {
               <button class="dropdown-item" onclick="copy_em_id()"><span class="fal fa-copy  mr-10"></span> Copier EM ID</button>
               <button class="dropdown-item" onclick="fill_empty_LS()"><span class="fal fa-file-alt docImage  mr-10"></span>  Remplir tous les "Nº LS" vides avec "X"</button>
               <button class="dropdown-item" onclick="updatePalettes()"><span class="fal fa-edit  mr-10"></span> Mettre à jour les notes des positions sélectionnées</button>
-              <button class="dropdown-item" id="blocke_tour_editing"><span class="fal fa-lock  mr-10"></span> Bloquer la modification de cette tournée</button>
               <hr>
               <button class="dropdown-item" onclick="check_all_sscc()"><span class="fal fa-barcode  mr-10"></span> Vérifier toutes les SSCC</button>
               <button class="dropdown-item" onclick="check_avance()"><span class="fal fa-calendar-alt  mr-10"></span> Vérifier l'avance</button>
@@ -1128,9 +1128,9 @@ function changer_transporteur() {
 }
 function save_changes_transporteur(selectedTourId) {
 
-  const currentTourId = new URLSearchParams(window.location.search).get('waTourId');
-  const tourA_url = `/Warenausgang/Tour?sort=StatusASC&waTourId=${currentTourId}`;
-  const tourB_url = `/Warenausgang/Tour?sort=StatusASC&waTourId=${selectedTourId}`;
+  const currentTourId = new URLSearchParams(window.location.search).get('publicWaTourId');
+  const tourA_url = `/Warenausgang/Tour?sort=StatusASC&publicWaTourId=${currentTourId}`;
+  const tourB_url = `/Warenausgang/Tour?sort=StatusASC&publicWaTourId=${selectedTourId}`;
 
   // Helper: serialize ALL elements linked to a form by id (including form="postform" outside the tag)
   function serializeFormById($doc, formId) {
@@ -1765,50 +1765,6 @@ function updatePalettes(){
 
     updatePalettesNotes()
 }
-//-----------------------------------//
-// Bloquer la modification des tournées
-//-----------------------------------// 
-
-$(document).ready(function() {
-  if (!window.location.href.toLowerCase().includes("wetourid=")) return;
-  let logged_user = $(".fa-sign-out").attr("data-original-title").replace("Logout STB_", "").replace("@xdock.de", "");
-    
-
-  if ($("#kommentarIntern").val().includes("#Bloquée_Par_")) {
-    let bloquée_par = $("#kommentarIntern").val().match(/#Bloquée_Par_([^\n\r]*)/)[1];
-    // show masage in the center of the page with overlay
-    $("body").append(`
-      <div id="overlay-blocked-tour" style="position: fixed;top: 0; left: 0;width: 100%;height: 100%;background-color: rgba(0, 0, 0, 0.5);z-index: 9999;">
-        <div class="alert alert-danger text-center py-5" role="alert" style="position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; width: 40%;">
-        <h1><span class="fas fa-lock text-danger" style="font-size: 2rem;"></span></h1>  
-        <h1 class="alert-heading"> Tournée bloquée par ${bloquée_par}</h1>
-          <p>Cette tournée est bloquée par ${bloquée_par}. Vous ne pouvez pas la modifier.Contactez l'utilisateur responsable pour plus d'informations.</p>
-        
-          <p>Commentaire interne:</p>
-          <pre style="background-color: #f8f9fa52; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto;">${$("#kommentarIntern").val()}</pre>
-          
-          <hr>
-          <button class="btn btn-danger" id="unblock_tour_editing" ${$("#kommentarIntern").val().includes(logged_user) ? '' : 'disabled'}  ><span class="fas fa-unlock"></span> Débloquer la tournée</button>
-          <button class="btn btn-secondary" ${$("#kommentarIntern").val().includes(logged_user) ? '' : 'disabled'} onclick="$('#overlay-blocked-tour').remove()">Continuer la modification</button>
-        </div>
-      </div>
-    `);   
-  }
- 
-  // Handle block button click
-   $(document).on('click', '#blocke_tour_editing', function() { 
-  $("#kommentarIntern").val($("#kommentarIntern").val() + "\n#Bloquée_Par_" + logged_user);
-    $("#saveBtn").trigger("click");
-  });
-
-  // Handle unblock button click
-  $(document).on('click', '#unblock_tour_editing', function() { 
-    let comment = $("#kommentarIntern").val();
-     $("#kommentarIntern").val(comment.replace("\n#Bloquée_Par_" + logged_user, ""));
-    $("#saveBtn").trigger("click");
-  }); 
-
-});
 
 
 //-----------------------------------//
