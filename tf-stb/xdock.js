@@ -654,7 +654,7 @@ let SM_found =0;
         let info = value.cells[19].innerHTML;
 
         if(info.includes(Remorque) || info.includes(Tracteur)){
-          window.open("/Warenausgang/Tour?waTourId=" + value.cells[0].innerText.trim(), "_blank");
+          window.open("/Warenausgang/Tour?publicWaTourId=" + value.cells[0].innerText.trim(), "_blank");
           SM_found+=1;
 
         }
@@ -941,7 +941,7 @@ function check_livraison_day() {
   }
 }
 
-if (window.location.href.includes("waTourId=")) {
+if (window.location.href.includes("publicWaTourId=")) {
  
   check_livraison_day();
 }
