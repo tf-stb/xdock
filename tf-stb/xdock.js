@@ -1,9 +1,9 @@
 //***************************//
 // XDock PRO - tf-stb.com
-// Dernière mise à jour le 12/10/2026
+// Dernière mise à jour le 13/10/2026
 // Copyright  ABBAS Hassan
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.23_12/10/2026- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.24_13/10/2026- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -741,7 +741,7 @@ LS numérique
 
       let tourURL = $(tr_children[0]).find("a")[0].innerText;
       let LS_list = [];
-      $.get("/Wareneingang/Tour?sort=LieferantStrASC&weTourId=" + tourURL, function (data, textStatus, jqXHR) {
+      $.get("/Wareneingang/Tour?sort=LieferantStrASC&publicWeTourId=" + tourURL, function (data, textStatus, jqXHR) {
         var labelContent = data.substring(data.indexOf("rique:"));
 
         var labelText = labelContent.substring(6, labelContent.indexOf("</label>"));
