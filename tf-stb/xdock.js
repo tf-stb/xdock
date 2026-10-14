@@ -1826,7 +1826,7 @@ function deleteSelectedBySSCC() {
 
     // Extract waTourId from current URL
     const urlParams = new URLSearchParams(window.location.search);
-    const waTourId = urlParams.get('waTourId');
+    const waTourId = urlParams.get('publicWaTourId');
 
     if (!waTourId) {
         toastr.error("Could not find waTourId in the current URL.");
