@@ -252,7 +252,7 @@ function task_manger() {
   let tourStatus = $(".tourStatus").html();
   //let tourID = $("#tourid").val();
   let iswetour = window.location.href.includes("Wareneingang") ? "true" : "false";
-  let tourID = window.location.href.includes("Wareneingang") ? $("input[name='WeTourHeader.WeTourId']").val() : $("#tourid").val();
+  let tourID = window.location.href.includes("Wareneingang") ? $("input[name='WeTourHeader.WeTourId']").val() : $("input[name='waTourId']").val();
   let collaborateur = $("#mitarbeiterId").val();
   let working = false;
 
