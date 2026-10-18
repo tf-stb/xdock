@@ -1,9 +1,9 @@
 //***************************//
 // XDock PRO - tf-stb.com
-// Dernière mise à jour le 13/10/2026
+// Dernière mise à jour le 18/10/2026
 // Copyright  ABBAS Hassan
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.24_13/10/2026- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.25_18/10/2026- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -1825,8 +1825,7 @@ function deleteSelectedBySSCC() {
     if (!confirm(`Êtes-vous sûr de vouloir supprimer ${ids.length} palette(s) ?`)) return;
 
     // Extract waTourId from current URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const waTourId = urlParams.get('publicWaTourId');
+     const waTourId = $('input[name="WaTourVm.WaTourId"]').val();
 
     if (!waTourId) {
         toastr.error("Could not find waTourId in the current URL.");
