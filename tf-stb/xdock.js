@@ -1,9 +1,9 @@
 //***************************//
 // XDock PRO - tf-stb.com
-// Dernière mise à jour le 18/10/2026
+// Dernière mise à jour le 20/10/2026
 // Copyright  ABBAS Hassan
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.25_18/10/2026- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.26_20/10/2026- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -820,6 +820,18 @@ function check_avance() {
 //--------------------------------
 // Remove Tournée SM From palettes
 //--------------------------------
+function getWaTourId(smNumber) {
+    const select = document.getElementById('linkedWaTourId');
+    if (!select) return null;
+
+    for (let option of select.options) {
+        // Checks if the option text contains the SM number (e.g., "SM 3030320")
+        if (option.text.includes(`SM ${smNumber}`)) {
+            return option.value;
+        }
+    }
+    return null;
+}
 
 $(document).on("click", "#removeSM", function (e) {
     
@@ -830,7 +842,7 @@ $(document).on("click", "#removeSM", function (e) {
   const grouped = {};
 
   $('.to-be-deleted').each(function () {
-      const waTour = $(this).find(".btn-waTour")[0].innerText.trim();
+      const waTour = getWaTourId($(this).find(".btn-waTour")[0].innerText.trim());
       const paletteId = $("#paletten_" + $(this).data('welpid')).find('.palettenToDelete').val();
 
       if (!grouped[waTour]) {
