@@ -1,9 +1,9 @@
 //***************************//
 // XDock PRO - tf-stb.com
-// Dernière mise à jour le 20/10/2026
+// Dernière mise à jour le 04/11/2026
 // Copyright  ABBAS Hassan
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.26_20/10/2026- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.26_04/11/2026- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
@@ -513,6 +513,8 @@ if (isEMTour) {
               <button class="dropdown-item" onclick="copy_em_id()"><span class="fal fa-copy  mr-10"></span> Copier EM ID</button>
               <button class="dropdown-item" onclick="fill_empty_LS()"><span class="fal fa-file-alt docImage  mr-10"></span>  Remplir tous les "Nº LS" vides avec "X"</button>
               <button class="dropdown-item" onclick="updatePalettes()"><span class="fal fa-edit  mr-10"></span> Mettre à jour les notes des positions sélectionnées</button>
+              <button class="dropdown-item" onclick="Presta_xDock_integration()"><span class="fal fa-plug  mr-10"></span> Lancer Presta-XDock intégration</button>
+
               <hr>
               <button class="dropdown-item" onclick="check_all_sscc()"><span class="fal fa-barcode  mr-10"></span> Vérifier toutes les SSCC</button>
               <button class="dropdown-item" onclick="check_avance()"><span class="fal fa-calendar-alt  mr-10"></span> Vérifier l'avance</button>
@@ -1866,4 +1868,371 @@ function deleteSelectedBySSCC() {
     .catch(error => {
         toastr.error(`Request failed: ${error.message}`);
     });
+}
+//-----------------------------------//
+// Presta-xDock integration
+//-----------------------------------// 
+/**
+ * Presta_xDock_integration  (v4 - modal, background fetch, empty SSCC only)
+ * ---------------------------------------------------------------
+ * For each selected position (tr.to-be-deleted):
+ *   1. GET  /Wareneingang/WeTourLpPaletten?weTourLpId=<id>
+ *   2. reads GTIN + Référence from the page
+ *   3. finds clipboard-JSON rows with the same GTIN + Référence
+ *   4. fills SSCC + Colis chargés (PF -> GelieferteKolli) ONLY on palettes whose SSCC is empty
+ *   5. POSTs the complete form (CSRF token + every existing field)
+ * A modal shows progress (counter, stats, log).
+ */
+function Presta_xDock_integration() {
+    'use strict';
+
+    /* ------------------------------------------------------------------ *
+     *  0. Selection
+     * ------------------------------------------------------------------ */
+    const selectedRows = $('tr.to-be-deleted');
+    if (selectedRows.length === 0) return toastr.error('Aucune position sélectionnée.');
+
+    const ids = [...new Set(
+        selectedRows.map((_, el) => String($(el).attr('data-welpid') || '').trim()).get().filter(Boolean)
+    )];
+    if (ids.length === 0) return toastr.error('Aucun identifiant (data-welpid) trouvé sur les lignes sélectionnées.');
+
+    /* ------------------------------------------------------------------ *
+     *  1. Helpers
+     * ------------------------------------------------------------------ */
+    const sleep    = ms => new Promise(r => setTimeout(r, ms));
+    const normGtin = v => String(v ?? '').replace(/\D/g, '').padStart(14, '0');
+    const normRef  = v => String(v ?? '').trim().toUpperCase();
+    const keyOf    = (gtin, ref) => `${normGtin(gtin)}|${normRef(ref)}`;
+
+    /** Clipboard JSON -> Map("GTIN|REF" -> [{sscc, pf}, ...]) */
+    function buildIndex(text) {
+        let data;
+        try { data = JSON.parse(text); } catch (e) { return null; }
+        if (!Array.isArray(data)) data = data && (data.data || data.palettes || data.Paletten);
+        if (!Array.isArray(data)) return null;
+
+        const index = new Map();
+        let count = 0;
+        data.forEach(item => {
+            const gtin = item.GTIN ?? item.gtin;
+            const ref  = item['Référence'] ?? item.Reference ?? item.ref;
+            const pf   = parseInt(item.PF ?? item.pf, 10);
+            const sscc = String(item.SSCC ?? item.sscc ?? '').replace(/\D/g, '');
+            if (!gtin || !ref || sscc.length !== 18 || !Number.isFinite(pf)) return;
+            const k = keyOf(gtin, ref);
+            if (!index.has(k)) index.set(k, []);
+            index.get(k).push({ sscc, pf });
+            count++;
+        });
+        index.total = count;
+        return count ? index : null;
+    }
+
+    /** Reads GTIN + Référence from .lieferposition-details */
+    function readPositionInfo(doc) {
+        let gtin = null, ref = null;
+        doc.querySelectorAll('.lieferposition-details p').forEach(p => {
+            const t = p.textContent.replace(/\s+/g, ' ').trim();
+            const g = t.match(/\((\d{8,14})\)\s*$/);
+            if (g) { gtin = g[1]; return; }
+            const r = t.match(/^([A-Z0-9]{6,})(?:\s*\(|$)/);
+            if (r && /\d/.test(r[1]) && /[A-Z]/.test(r[1])) ref = r[1];
+        });
+        return { gtin, ref };
+    }
+
+    /**
+     * Finds the palette inputs by NAME (works whatever the tr classes are and even
+     * when inputs are attached to the form with form="..." outside of the <form> tag).
+     * Returns [{ sscc: <input>, kolli: <input> }]
+     */
+    function findPaletteRows(doc) {
+        const byName = new Map();
+        doc.querySelectorAll('input[name],select[name],textarea[name]').forEach(e => {
+            byName.set(e.name.toLowerCase(), e);
+        });
+        const rows = [];
+        byName.forEach((sscc, name) => {
+            if (!/\.sscc$/.test(name) || sscc.type === 'hidden') return;
+            const prefix = name.slice(0, -'.sscc'.length);
+            let kolli = byName.get(prefix + '.gelieferteKolli'.toLowerCase());
+            if (!kolli) {   // fallback: any "kolli" input in the same row
+                const scope = sscc.closest('tr');
+                kolli = scope && scope.querySelector('input[name*="kolli" i]');
+            }
+            if (kolli) rows.push({ sscc, kolli });
+        });
+        return rows;
+    }
+
+    /** Finds the form that owns the palette inputs */
+    function findForm(doc, rows) {
+        return (rows[0] && rows[0].sscc.form)
+            || doc.getElementById('postform')
+            || doc.querySelector('form[action*="WeTourLpPaletten" i]')
+            || doc.querySelector('form');
+    }
+
+    /** Builds the POST body: all fields of the form (incl. form="id" fields) + CSRF token */
+    function serializeForm(doc, form) {
+        const els = new Set([...form.elements]);
+        if (form.id) doc.querySelectorAll(`[form="${form.id}"]`).forEach(e => els.add(e));
+
+        const p = new URLSearchParams();
+        els.forEach(el => {
+            const n = el.name;
+            if (!n || el.disabled) return;
+            const type = (el.type || '').toLowerCase();
+            if (el.tagName === 'FIELDSET' || ['submit', 'button', 'image', 'reset', 'file'].includes(type)) return;
+            if ((type === 'checkbox' || type === 'radio') && !el.checked) return;
+            if (el.tagName === 'SELECT') {
+                [...el.options].forEach(o => { if (o.selected) p.append(n, o.value); });
+                return;
+            }
+            p.append(n, el.value);
+        });
+
+        if (!p.has('__RequestVerificationToken')) {
+            const t = doc.querySelector('input[name="__RequestVerificationToken"]');
+            if (t) p.append('__RequestVerificationToken', t.value);
+        }
+        return p;
+    }
+
+    /* ------------------------------------------------------------------ *
+     *  2. Process one position
+     * ------------------------------------------------------------------ */
+    const usedSscc = new Set();   // a SSCC is assigned only once for the whole run
+
+    async function processPosition(id, index) {
+        const url = `/Wareneingang/WeTourLpPaletten?weTourLpId=${encodeURIComponent(id)}`;
+
+        // --- GET
+        const getRes = await fetch(url, { credentials: 'same-origin' });
+        if (!getRes.ok) throw new Error(`GET HTTP ${getRes.status}`);
+        const doc = new DOMParser().parseFromString(await getRes.text(), 'text/html');
+
+        const { gtin, ref } = readPositionInfo(doc);
+        if (!gtin || !ref) {
+            if (!doc.querySelector('input[name="__RequestVerificationToken"], form')) {
+                throw new Error('Page invalide (session expirée ?)');
+            }
+            throw new Error('GTIN / Référence introuvables sur la page');
+        }
+        const label = `${normGtin(gtin)} · ${normRef(ref)}`;
+
+        // --- Palettes on the page
+        const rows = findPaletteRows(doc);
+        if (!rows.length) {
+            const names = [...doc.querySelectorAll('input[name],select[name]')].map(e => e.name);
+            console.warn('[xDock] aucune palette détectée', { id, names });
+            throw new Error('Aucun champ SSCC / Colis chargés sur la page (voir console F12)');
+        }
+        const form = findForm(doc, rows);
+        if (!form) throw new Error('Formulaire introuvable');
+
+        // --- ONLY palettes with an EMPTY sscc (and editable fields)
+        const emptyAll = rows.filter(r => !r.sscc.value.trim());
+        const empty    = emptyAll.filter(r => !r.sscc.disabled && !r.kolli.disabled);
+        const filled   = rows.length - emptyAll.length;
+        if (!empty.length) {
+            return { status: 'unchanged', label, msg: `Aucune palette sans SSCC (${filled} déjà renseignée(s))` };
+        }
+
+        // --- Candidates: same GTIN+Ref, not on the page yet, not used before
+        const onPage = new Set(rows.map(r => r.sscc.value.trim()).filter(Boolean));
+        const candidates = (index.get(keyOf(gtin, ref)) || [])
+            .filter(c => !usedSscc.has(c.sscc) && !onPage.has(c.sscc));
+        if (!candidates.length) return { status: 'skipped', label, msg: 'Aucun SSCC disponible dans le presse-papiers' };
+
+        // --- Fill
+        const taken = [];
+        empty.forEach(r => {
+            const c = candidates.shift();
+            if (!c) return;
+            r.sscc.value  = c.sscc;
+            r.kolli.value = String(c.pf);
+            taken.push(c.sscc);
+        });
+
+        const notes = [];
+        if (empty.length > taken.length) notes.push(`${empty.length - taken.length} palette(s) sans SSCC disponible`);
+        if (filled) notes.push(`${filled} déjà renseignée(s) ignorée(s)`);
+        const note = notes.length ? ` (${notes.join(', ')})` : '';
+
+        // --- "Notes" multi-selects: restore initial values (normally filled by JS on the real page)
+        form.querySelectorAll('select[multiple]').forEach(sel => {
+            const raw = sel.getAttribute('dataInitialValues');
+            if (raw === null) return;
+            const init = raw.split(',').filter(Boolean);
+            [...sel.options].forEach(o => { o.selected = init.includes(o.value); });
+        });
+
+        // --- POST
+        const postUrl = new URL(form.getAttribute('action') || url, location.origin).href;
+        const postRes = await fetch(postUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+            body: serializeForm(doc, form).toString(),
+        });
+        if (!postRes.ok) throw new Error(`POST HTTP ${postRes.status}`);
+
+        const resDoc = new DOMParser().parseFromString(await postRes.text(), 'text/html');
+        if (resDoc.querySelector('.validation-summary-errors, .input-validation-error, .field-validation-error')) {
+            throw new Error('Le serveur a refusé les données (erreur de validation)');
+        }
+
+        taken.forEach(s => usedSscc.add(s));   // reserved only after a successful save
+        return { status: 'updated', label, msg: `${taken.length} palette(s) mise(s) à jour${note}` };
+    }
+
+    /* ------------------------------------------------------------------ *
+     *  3. Modal
+     * ------------------------------------------------------------------ */
+    const STATUS = {
+        updated:   { icon: '✔', color: '#198754', text: 'Mis à jour' },
+        unchanged: { icon: '＝', color: '#6c757d', text: 'Inchangé' },
+        skipped:   { icon: '↷', color: '#fd7e14', text: 'Ignoré' },
+        error:     { icon: '✖', color: '#dc3545', text: 'Erreur' },
+    };
+
+    function h(tag, style, text) {
+        const e = document.createElement(tag);
+        if (style) e.style.cssText = style;
+        if (text !== undefined) e.textContent = text;
+        return e;
+    }
+
+    function createModal() {
+        const overlay = h('div', 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:system-ui,Segoe UI,Arial,sans-serif;');
+        const box  = h('div', 'background:#fff;color:#212529;border-radius:10px;width:680px;max-width:94vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.4);overflow:hidden;');
+        const head = h('div', 'background:#003278;color:#fff;padding:14px 20px;font-size:17px;font-weight:600;', 'Intégration SSCC / Colis');
+        const body = h('div', 'padding:18px 20px;overflow:auto;');
+        const foot = h('div', 'padding:12px 20px;border-top:1px solid #dee2e6;display:flex;gap:8px;justify-content:flex-end;');
+
+        const counter = h('div', 'font-size:34px;font-weight:700;text-align:center;line-height:1.1;', `0 / ${ids.length}`);
+        const sub     = h('div', 'text-align:center;color:#6c757d;margin-bottom:10px;min-height:20px;', 'Préparation…');
+        const barWrap = h('div', 'height:14px;background:#e9ecef;border-radius:7px;overflow:hidden;margin-bottom:14px;');
+        const bar     = h('div', 'height:100%;width:0;background:#003278;transition:width .25s;');
+        barWrap.appendChild(bar);
+
+        const stats = h('div', 'display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;');
+        const statEls = {};
+        Object.entries(STATUS).forEach(([k, s]) => {
+            const chip = h('div', `border:1px solid ${s.color};color:${s.color};border-radius:16px;padding:3px 12px;font-size:13px;`);
+            const n = h('b', '', '0');
+            chip.append(`${s.icon} ${s.text} : `, n);
+            statEls[k] = n; stats.appendChild(chip);
+        });
+
+        const log   = h('div', 'border:1px solid #dee2e6;border-radius:6px;height:230px;overflow:auto;font-size:13px;');
+        const input = h('textarea', 'display:none;width:100%;height:160px;font-family:monospace;font-size:12px;margin-top:10px;');
+        input.placeholder = "Collez ici le JSON (le presse-papiers n'est pas accessible)…";
+
+        const btnCancel = h('button', 'padding:6px 16px;border:1px solid #6c757d;background:#fff;border-radius:5px;cursor:pointer;', 'Annuler');
+        const btnStart  = h('button', 'display:none;padding:6px 16px;border:0;background:#003278;color:#fff;border-radius:5px;cursor:pointer;', 'Lancer');
+        const btnClose  = h('button', 'display:none;padding:6px 16px;border:0;background:#003278;color:#fff;border-radius:5px;cursor:pointer;', 'Fermer');
+
+        body.append(counter, sub, barWrap, stats, log, input);
+        foot.append(btnCancel, btnStart, btnClose);
+        box.append(head, body, foot);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        return {
+            btnCancel, btnStart, btnClose, input,
+            setSub: t => { sub.textContent = t; },
+            progress(done) {
+                counter.textContent = `${done} / ${ids.length}`;
+                bar.style.width = `${Math.round(done / ids.length * 100)}%`;
+            },
+            stat(k, n) { statEls[k].textContent = n; },
+            addLog(id, r) {
+                const s = STATUS[r.status];
+                const row = h('div', 'display:flex;gap:8px;padding:5px 10px;border-bottom:1px solid #f1f3f5;align-items:baseline;');
+                row.append(
+                    h('span', `color:${s.color};font-weight:700;width:16px;`, s.icon),
+                    h('span', 'width:80px;color:#6c757d;', `#${id}`),
+                    h('span', 'flex:1;', `${r.label ? r.label + ' — ' : ''}${r.msg}`)
+                );
+                log.appendChild(row);
+                log.scrollTop = log.scrollHeight;
+            },
+            showPaste() { input.style.display = 'block'; btnStart.style.display = ''; },
+            hidePaste() { input.style.display = 'none'; btnStart.style.display = 'none'; },
+            finish(reload) {
+                btnCancel.style.display = 'none';
+                btnClose.style.display = '';
+                btnClose.textContent = reload ? 'Fermer et recharger' : 'Fermer';
+                btnClose.onclick = () => { overlay.remove(); if (reload) location.reload(); };
+            },
+            remove: () => overlay.remove(),
+        };
+    }
+
+    /* ------------------------------------------------------------------ *
+     *  4. Orchestration
+     * ------------------------------------------------------------------ */
+    const ui = createModal();
+    let cancelled = false, running = false;
+
+    ui.btnCancel.onclick = () => {
+        if (running) {
+            cancelled = true;
+            ui.btnCancel.disabled = true;
+            ui.setSub('Annulation après la position en cours…');
+        } else {
+            ui.remove();
+        }
+    };
+
+    async function run(index) {
+        running = true;
+        ui.hidePaste();
+        ui.setSub(`${index.total} palette(s) dans le presse-papiers · ${index.size} couple(s) GTIN/Réf.`);
+        const counts = { updated: 0, unchanged: 0, skipped: 0, error: 0 };
+        let done = 0;
+
+        for (const id of ids) {
+            if (cancelled) break;
+            ui.setSub(`Position #${id}…`);
+            let r;
+            try {
+                r = await processPosition(id, index);
+            } catch (err) {
+                console.error(`[xDock] position ${id}`, err);
+                r = { status: 'error', msg: err.message || String(err) };
+            }
+            counts[r.status]++;
+            done++;
+            ui.stat(r.status, counts[r.status]);
+            ui.addLog(id, r);
+            ui.progress(done);
+            await sleep(150);
+        }
+
+        running = false;
+        ui.setSub(cancelled ? `Annulé : ${done}/${ids.length} position(s) traitée(s).` : 'Terminé.');
+        if (counts.updated) toastr.success(`${counts.updated} position(s) mise(s) à jour.`);
+        if (counts.error)   toastr.error(`${counts.error} erreur(s) — voir la fenêtre.`);
+        ui.finish(counts.updated > 0);
+    }
+
+    (async () => {
+        let text = null;
+        try { text = await navigator.clipboard.readText(); } catch (e) { /* page not focused / no permission */ }
+        const index = text ? buildIndex(text) : null;
+        if (index) return run(index);
+
+        ui.setSub(text ? 'Le presse-papiers ne contient pas de JSON valide. Collez-le ci-dessous.'
+                       : 'Lecture du presse-papiers impossible. Collez le JSON ci-dessous.');
+        ui.showPaste();
+        ui.btnStart.onclick = () => {
+            const idx = buildIndex(ui.input.value);
+            if (!idx) return toastr.error('JSON invalide ou sans SSCC (attendu : GTIN, Référence, PF, SSCC).');
+            run(idx);
+        };
+    })();
 }
