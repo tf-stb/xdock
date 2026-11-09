@@ -1,9 +1,9 @@
 //***************************//
 // XDock PRO - tf-stb.com
-// Dernière mise à jour le 04/11/2026
+// Dernière mise à jour le 09/11/2026
 // Copyright  ABBAS Hassan
 //***************************//
-$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.27_04/11/2026- </small>");
+$("footer>.text-muted.text-right").prepend("<small>XDock PRO Ver 5.28_09/11/2026- </small>");
 
 if (window.location.pathname == "/") {
   $("h1").html("XDock PRO");
