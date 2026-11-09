@@ -1930,17 +1930,19 @@ function Presta_xDock_integration() {
     }
 
     /** Reads GTIN + Référence from .lieferposition-details */
-    function readPositionInfo(doc) {
-        let gtin = null, ref = null;
-        doc.querySelectorAll('.lieferposition-details p').forEach(p => {
-            const t = p.textContent.replace(/\s+/g, ' ').trim();
-            const g = t.match(/\((\d{8,14})\)\s*$/);
-            if (g) { gtin = g[1]; return; }
-            const r = t.match(/^([A-Z0-9]{6,})(?:\s*\(|$)/);
-            if (r && /\d/.test(r[1]) && /[A-Z]/.test(r[1])) ref = r[1];
-        });
-        return { gtin, ref };
-    }
+function readPositionInfo(doc) {
+    let gtin = null, ref = null;
+    doc.querySelectorAll('.lieferposition-details p').forEach(p => {
+        const t = p.textContent.replace(/\s+/g, ' ').trim();
+        const g = t.match(/\((\d{8,14})\)\s*$/);
+        if (g) { gtin = g[1]; return; }
+        
+        // Added \- to allow hyphens in the reference code
+        const r = t.match(/^([A-Z0-9\-]{6,})(?:\s*\(|$)/);
+        if (r && /\d/.test(r[1]) && /[A-Z]/.test(r[1])) ref = r[1];
+    });
+    return { gtin, ref };
+}
 
     /**
      * Finds the palette inputs by NAME (works whatever the tr classes are and even
